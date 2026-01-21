@@ -87,9 +87,10 @@ export function MeetingPlannerModal({ hostZoneKey, otherZoneKeys }: MeetingPlann
       </DialogTrigger>
       <DialogContent className="sm:max-w-md" data-testid="dialog-meeting-planner">
         <DialogHeader>
-          <DialogTitle className="font-display font-semibold">
+          <DialogTitle className="font-display font-semibold text-foreground">
             Meeting Time Zone Calculations
           </DialogTitle>
+          <p className="text-sm text-muted-foreground">Plan meetings across different time zones</p>
         </DialogHeader>
 
         <div className="space-y-6 mt-4">
