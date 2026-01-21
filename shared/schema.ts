@@ -1,52 +1,60 @@
 import { z } from "zod";
 
-export const timezoneSchema = z.object({
-  id: z.string(),
-  city: z.string(),
-  timezone: z.string(),
-  gmtOffset: z.string(),
-  order: z.number(),
-});
+export const ALL_TIMEZONES = {
+  auckland: { name: "Auckland", label: "NZST / NZDT", offset: 12, gmtLabel: "GMT+12" },
+  sydney: { name: "Sydney", label: "AEST / AEDT", offset: 10, gmtLabel: "GMT+10" },
+  tokyo: { name: "Tokyo", label: "JST", offset: 9, gmtLabel: "GMT+9" },
+  seoul: { name: "Seoul", label: "KST", offset: 9, gmtLabel: "GMT+9" },
+  hongKong: { name: "Hong Kong", label: "HKT", offset: 8, gmtLabel: "GMT+8" },
+  singapore: { name: "Singapore", label: "SGT", offset: 8, gmtLabel: "GMT+8" },
+  bangkok: { name: "Bangkok", label: "ICT", offset: 7, gmtLabel: "GMT+7" },
+  jakarta: { name: "Jakarta", label: "WIB", offset: 7, gmtLabel: "GMT+7" },
+  mumbai: { name: "Mumbai", label: "IST", offset: 5.5, gmtLabel: "GMT+5:30" },
+  dubai: { name: "Dubai", label: "GST", offset: 4, gmtLabel: "GMT+4" },
+  moscow: { name: "Moscow", label: "MSK", offset: 3, gmtLabel: "GMT+3" },
+  cairo: { name: "Cairo", label: "EET", offset: 2, gmtLabel: "GMT+2" },
+  johannesburg: { name: "Johannesburg", label: "SAST", offset: 2, gmtLabel: "GMT+2" },
+  berlin: { name: "Berlin", label: "CET / CEST", offset: 1, gmtLabel: "GMT+1" },
+  paris: { name: "Paris", label: "CET / CEST", offset: 1, gmtLabel: "GMT+1" },
+  london: { name: "London", label: "GMT / BST", offset: 0, gmtLabel: "GMT+0" },
+  saoPaulo: { name: "São Paulo", label: "BRT", offset: -3, gmtLabel: "GMT-3" },
+  newYork: { name: "New York", label: "EST / EDT", offset: -5, gmtLabel: "GMT-5" },
+  toronto: { name: "Toronto", label: "EST / EDT", offset: -5, gmtLabel: "GMT-5" },
+  chicago: { name: "Chicago", label: "CST / CDT", offset: -6, gmtLabel: "GMT-6" },
+  denver: { name: "Denver", label: "MST / MDT", offset: -7, gmtLabel: "GMT-7" },
+  losAngeles: { name: "Los Angeles", label: "PST / PDT", offset: -8, gmtLabel: "GMT-8" },
+  vancouver: { name: "Vancouver", label: "PST / PDT", offset: -8, gmtLabel: "GMT-8" },
+} as const;
 
-export const insertTimezoneSchema = timezoneSchema.omit({ id: true, order: true });
+export type TimezoneKey = keyof typeof ALL_TIMEZONES;
 
-export type Timezone = z.infer<typeof timezoneSchema>;
-export type InsertTimezone = z.infer<typeof insertTimezoneSchema>;
-
-export const AVAILABLE_TIMEZONES: { city: string; timezone: string; gmtOffset: string }[] = [
-  { city: "New York", timezone: "America/New_York", gmtOffset: "GMT-5" },
-  { city: "Los Angeles", timezone: "America/Los_Angeles", gmtOffset: "GMT-8" },
-  { city: "Chicago", timezone: "America/Chicago", gmtOffset: "GMT-6" },
-  { city: "Denver", timezone: "America/Denver", gmtOffset: "GMT-7" },
-  { city: "London", timezone: "Europe/London", gmtOffset: "GMT+0" },
-  { city: "Paris", timezone: "Europe/Paris", gmtOffset: "GMT+1" },
-  { city: "Berlin", timezone: "Europe/Berlin", gmtOffset: "GMT+1" },
-  { city: "Rome", timezone: "Europe/Rome", gmtOffset: "GMT+1" },
-  { city: "Madrid", timezone: "Europe/Madrid", gmtOffset: "GMT+1" },
-  { city: "Amsterdam", timezone: "Europe/Amsterdam", gmtOffset: "GMT+1" },
-  { city: "Moscow", timezone: "Europe/Moscow", gmtOffset: "GMT+3" },
-  { city: "Dubai", timezone: "Asia/Dubai", gmtOffset: "GMT+4" },
-  { city: "Mumbai", timezone: "Asia/Kolkata", gmtOffset: "GMT+5:30" },
-  { city: "Singapore", timezone: "Asia/Singapore", gmtOffset: "GMT+8" },
-  { city: "Hong Kong", timezone: "Asia/Hong_Kong", gmtOffset: "GMT+8" },
-  { city: "Shanghai", timezone: "Asia/Shanghai", gmtOffset: "GMT+8" },
-  { city: "Tokyo", timezone: "Asia/Tokyo", gmtOffset: "GMT+9" },
-  { city: "Seoul", timezone: "Asia/Seoul", gmtOffset: "GMT+9" },
-  { city: "Sydney", timezone: "Australia/Sydney", gmtOffset: "GMT+11" },
-  { city: "Melbourne", timezone: "Australia/Melbourne", gmtOffset: "GMT+11" },
-  { city: "Auckland", timezone: "Pacific/Auckland", gmtOffset: "GMT+13" },
-  { city: "Honolulu", timezone: "Pacific/Honolulu", gmtOffset: "GMT-10" },
-  { city: "Toronto", timezone: "America/Toronto", gmtOffset: "GMT-5" },
-  { city: "Vancouver", timezone: "America/Vancouver", gmtOffset: "GMT-8" },
-  { city: "Mexico City", timezone: "America/Mexico_City", gmtOffset: "GMT-6" },
-  { city: "Sao Paulo", timezone: "America/Sao_Paulo", gmtOffset: "GMT-3" },
-  { city: "Buenos Aires", timezone: "America/Argentina/Buenos_Aires", gmtOffset: "GMT-3" },
-  { city: "Cairo", timezone: "Africa/Cairo", gmtOffset: "GMT+2" },
-  { city: "Johannesburg", timezone: "Africa/Johannesburg", gmtOffset: "GMT+2" },
-  { city: "Lagos", timezone: "Africa/Lagos", gmtOffset: "GMT+1" },
-  { city: "Istanbul", timezone: "Europe/Istanbul", gmtOffset: "GMT+3" },
-  { city: "Bangkok", timezone: "Asia/Bangkok", gmtOffset: "GMT+7" },
-  { city: "Jakarta", timezone: "Asia/Jakarta", gmtOffset: "GMT+7" },
-  { city: "Taipei", timezone: "Asia/Taipei", gmtOffset: "GMT+8" },
-  { city: "Manila", timezone: "Asia/Manila", gmtOffset: "GMT+8" },
+export const AVAILABLE_ZONES: TimezoneKey[] = [
+  "paris",
+  "newYork",
+  "losAngeles",
+  "tokyo",
+  "sydney",
+  "dubai",
+  "singapore",
+  "hongKong",
+  "mumbai",
+  "berlin",
+  "moscow",
+  "toronto",
 ];
+
+export function getSortedTimezones() {
+  return Object.entries(ALL_TIMEZONES).sort((a, b) => b[1].offset - a[1].offset);
+}
+
+export function detectLocalTimezone(): TimezoneKey {
+  const localOffset = -(new Date().getTimezoneOffset() / 60);
+  const entries = Object.entries(ALL_TIMEZONES);
+  const match = entries.find(([_, tz]) => tz.offset === localOffset);
+  if (match) return match[0] as TimezoneKey;
+  return "london";
+}
+
+export function getTimeInZone(utcBaseTime: Date, offsetHours: number): Date {
+  return new Date(utcBaseTime.getTime() + offsetHours * 3600000);
+}
