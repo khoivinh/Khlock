@@ -40,7 +40,7 @@ function CitySelector({
       onValueChange={(val) => onZoneChange(val as TimezoneKey)} 
       onOpenChange={onOpenChange}
     >
-      <SelectTrigger className="w-fit h-auto p-0 border-0 bg-transparent text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 [&>svg]:hidden">
+      <SelectTrigger className="w-fit h-auto p-0 border-0 bg-transparent text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 gap-1">
         <SelectValue>{ALL_TIMEZONES[selectedZoneKey]?.name}</SelectValue>
       </SelectTrigger>
       <SelectContent>
