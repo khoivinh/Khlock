@@ -1,6 +1,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, LayoutGrid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DigitalClock } from "@/components/digital-clock";
 import {
   DndContext,
@@ -187,19 +193,19 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
     });
   }, []);
 
-  const handleAddClock = useCallback(() => {
+  const handleAddClock = useCallback((zoneKey: TimezoneKey) => {
     if (selectedZones.length >= MAX_CLOCKS) return;
+    if (selectedZones.includes(zoneKey)) return;
 
-    const nextZone = AVAILABLE_ZONES.find((zone) => !selectedZones.includes(zone));
-    if (nextZone) {
-      setSelectedZones((prev) => [nextZone, ...prev]);
-      setNewlyAddedZone(nextZone);
+    setSelectedZones((prev) => [zoneKey, ...prev]);
+    setNewlyAddedZone(zoneKey);
 
-      setTimeout(() => {
-        setNewlyAddedZone(null);
-      }, 1500);
-    }
+    setTimeout(() => {
+      setNewlyAddedZone(null);
+    }, 1500);
   }, [selectedZones]);
+
+  const availableZonesToAdd = AVAILABLE_ZONES.filter((zone) => !selectedZones.includes(zone));
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as TimezoneKey);
@@ -294,16 +300,34 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm uppercase text-muted-foreground">Add Time Zone</span>
-            <Button
-              size="icon"
-              onClick={handleAddClock}
-              disabled={selectedZones.length >= MAX_CLOCKS}
-              className="h-8 w-8 rounded-full"
-              title={selectedZones.length >= MAX_CLOCKS ? "Maximum 12 clocks reached" : "Add another clock"}
-              data-testid="button-add-timezone"
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  size="icon"
+                  disabled={availableZonesToAdd.length === 0}
+                  className="h-8 w-8 rounded-full"
+                  title={availableZonesToAdd.length === 0 ? "All time zones added" : "Add another clock"}
+                  data-testid="button-add-timezone"
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
+                {availableZonesToAdd.map((zoneKey) => {
+                  const tz = ALL_TIMEZONES[zoneKey];
+                  return (
+                    <DropdownMenuItem
+                      key={zoneKey}
+                      onClick={() => handleAddClock(zoneKey)}
+                      data-testid={`menu-item-${zoneKey}`}
+                    >
+                      <span className="font-medium">{tz.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground">{tz.gmtLabel}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex items-center gap-2">
