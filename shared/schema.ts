@@ -32,6 +32,7 @@ export const AVAILABLE_ZONES: TimezoneKey[] = [
   "paris",
   "newYork",
   "losAngeles",
+  "london",
   "tokyo",
   "sydney",
   "dubai",

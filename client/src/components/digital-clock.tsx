@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { GripVertical, X } from "lucide-react";
+import { useState, useMemo } from "react";
+import { GripVertical, X, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MeetingPlannerModal } from "@/components/meeting-planner-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { ALL_TIMEZONES, type TimezoneKey } from "@shared/schema";
+import { ALL_TIMEZONES, AVAILABLE_ZONES, type TimezoneKey } from "@shared/schema";
 import { useWeather, getTemperatureColor } from "@/hooks/use-weather";
 
 interface DigitalClockProps {
@@ -37,24 +37,66 @@ function CitySelector({
   onZoneChange: (zoneKey: TimezoneKey) => void;
   onOpenChange: (open: boolean) => void;
 }) {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTimezones = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    if (!query) {
+      // No search - show AVAILABLE_ZONES sorted by offset
+      return AVAILABLE_ZONES
+        .map(key => [key, ALL_TIMEZONES[key]] as [string, typeof ALL_TIMEZONES[TimezoneKey]])
+        .sort((a, b) => b[1].offset - a[1].offset);
+    }
+    
+    // With search - filter ALL_TIMEZONES
+    return Object.entries(ALL_TIMEZONES)
+      .filter(([key, tz]) => 
+        tz.name.toLowerCase().includes(query) || 
+        tz.gmtLabel.toLowerCase().includes(query) ||
+        key.toLowerCase().includes(query)
+      )
+      .sort((a, b) => b[1].offset - a[1].offset);
+  }, [searchQuery]);
+
   return (
     <Select 
       value={selectedZoneKey} 
-      onValueChange={(val) => onZoneChange(val as TimezoneKey)} 
-      onOpenChange={onOpenChange}
+      onValueChange={(val) => {
+        onZoneChange(val as TimezoneKey);
+        setSearchQuery("");
+      }} 
+      onOpenChange={(open) => {
+        onOpenChange(open);
+        if (!open) setSearchQuery("");
+      }}
     >
       <SelectTrigger className="w-fit h-auto p-0 border-0 bg-transparent text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 gap-1">
         <SelectValue>{ALL_TIMEZONES[selectedZoneKey]?.name}</SelectValue>
       </SelectTrigger>
       <SelectContent>
-        {Object.entries(ALL_TIMEZONES)
-          .filter(([key]) => key !== "london")
-          .sort((a, b) => b[1].offset - a[1].offset)
-          .map(([key, tz]) => (
-            <SelectItem key={key} value={key}>
-              {tz.name} ({tz.gmtLabel})
-            </SelectItem>
-          ))}
+        <div className="flex items-center gap-2 px-2 pb-2 sticky top-0 bg-popover">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search cities..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 text-sm"
+            onClick={(e) => e.stopPropagation()}
+            onKeyDown={(e) => e.stopPropagation()}
+            data-testid="input-city-search"
+          />
+        </div>
+        {filteredTimezones.map(([key, tz]) => (
+          <SelectItem key={key} value={key}>
+            {tz.name} ({tz.gmtLabel})
+          </SelectItem>
+        ))}
+        {filteredTimezones.length === 0 && (
+          <div className="py-2 px-4 text-sm text-muted-foreground">
+            No cities found
+          </div>
+        )}
       </SelectContent>
     </Select>
   );
@@ -211,13 +253,18 @@ export function DigitalClock({
               <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
             </div>
           ) : (
-            <p
-              className={`font-display text-6xl font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "hover:text-primary"}`}
-              onClick={handleTimeClick}
-              title="Click to edit time"
-            >
-              {timeString}
-            </p>
+            <div className="flex items-center gap-3">
+              <p
+                className={`font-display text-6xl font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "hover:text-primary"}`}
+                onClick={handleTimeClick}
+                title="Click to edit time"
+              >
+                {timeString}
+              </p>
+              {selectedZoneKey && otherZoneKeys.length > 0 && (
+                <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
+              )}
+            </div>
           )}
 
           <p className="text-xs text-muted-foreground">
@@ -229,26 +276,21 @@ export function DigitalClock({
             )}
           </p>
 
-          <div className="ml-auto flex items-center gap-2">
-            {selectedZoneKey && otherZoneKeys.length > 0 && (
-              <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
-            )}
-            {onRemove && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onRemove();
-                }}
-                title="Remove clock"
-                data-testid={`button-remove-${selectedZoneKey}`}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
+          {onRemove && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-auto h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onRemove();
+              }}
+              title="Remove clock"
+              data-testid={`button-remove-${selectedZoneKey}`}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
     );
@@ -278,26 +320,21 @@ export function DigitalClock({
         </div>
       )}
 
-      <div className="absolute top-4 right-2 flex flex-col gap-1">
-        {selectedZoneKey && otherZoneKeys.length > 0 && (
-          <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
-        )}
-        {onRemove && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove();
-            }}
-            title="Remove clock"
-            data-testid={`button-remove-${selectedZoneKey}`}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+      {onRemove && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="absolute top-4 right-2 h-7 w-7 p-0 text-muted-foreground/50 hover:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          title="Remove clock"
+          data-testid={`button-remove-${selectedZoneKey}`}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      )}
 
       <div className="pl-6">
         {isSelectable && selectedZoneKey && onZoneChange ? (
@@ -331,13 +368,18 @@ export function DigitalClock({
             </div>
           </div>
         ) : (
-          <p
-            className={`mt-1 font-display text-3xl font-black tracking-tight text-foreground md:text-4xl cursor-pointer transition-colors ${isDragActive ? "" : "hover:text-primary"}`}
-            onClick={handleTimeClick}
-            title="Click to edit time"
-          >
-            {timeString}
-          </p>
+          <div className="mt-1 flex items-center gap-2">
+            <p
+              className={`font-display text-3xl font-black tracking-tight text-foreground md:text-4xl cursor-pointer transition-colors ${isDragActive ? "" : "hover:text-primary"}`}
+              onClick={handleTimeClick}
+              title="Click to edit time"
+            >
+              {timeString}
+            </p>
+            {selectedZoneKey && otherZoneKeys.length > 0 && (
+              <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
+            )}
+          </div>
         )}
         <p className="mt-1 text-xs text-muted-foreground">
           {timezone}

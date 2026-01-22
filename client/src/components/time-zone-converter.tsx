@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { Plus, LayoutGrid, List } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Plus, LayoutGrid, List, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -222,7 +223,31 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
     setSelectedZones((prev) => prev.filter((z) => z !== zoneKey));
   }, []);
 
-  const availableZonesToAdd = AVAILABLE_ZONES.filter((zone) => !selectedZones.includes(zone));
+  const [addZoneSearchQuery, setAddZoneSearchQuery] = useState("");
+  
+  const filteredZonesToAdd = useMemo(() => {
+    const query = addZoneSearchQuery.toLowerCase().trim();
+    
+    if (!query) {
+      // No search - show AVAILABLE_ZONES not already selected
+      return AVAILABLE_ZONES
+        .filter((zone) => !selectedZones.includes(zone))
+        .map(key => [key, ALL_TIMEZONES[key]] as [TimezoneKey, typeof ALL_TIMEZONES[TimezoneKey]])
+        .sort((a, b) => b[1].offset - a[1].offset);
+    }
+    
+    // With search - filter ALL_TIMEZONES (excluding already selected)
+    return (Object.entries(ALL_TIMEZONES) as [TimezoneKey, typeof ALL_TIMEZONES[TimezoneKey]][])
+      .filter(([key, tz]) => 
+        !selectedZones.includes(key) &&
+        (tz.name.toLowerCase().includes(query) || 
+         tz.gmtLabel.toLowerCase().includes(query) ||
+         key.toLowerCase().includes(query))
+      )
+      .sort((a, b) => b[1].offset - a[1].offset);
+  }, [addZoneSearchQuery, selectedZones]);
+
+  const canAddMoreZones = selectedZones.length < MAX_CLOCKS;
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as TimezoneKey);
@@ -321,32 +346,51 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm uppercase text-muted-foreground">Add Time Zone</span>
-            <DropdownMenu>
+            <DropdownMenu onOpenChange={(open) => { if (!open) setAddZoneSearchQuery(""); }}>
               <DropdownMenuTrigger asChild>
                 <Button
                   size="icon"
-                  disabled={availableZonesToAdd.length === 0}
+                  disabled={!canAddMoreZones}
                   className="h-8 w-8 rounded-full"
-                  title={availableZonesToAdd.length === 0 ? "All time zones added" : "Add another clock"}
+                  title={!canAddMoreZones ? "Maximum clocks reached" : "Add another clock"}
                   data-testid="button-add-timezone"
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
-                {availableZonesToAdd.map((zoneKey) => {
-                  const tz = ALL_TIMEZONES[zoneKey];
-                  return (
+              <DropdownMenuContent align="start" className="w-64">
+                <div className="flex items-center gap-2 px-2 pb-2 sticky top-0 bg-popover">
+                  <Search className="h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search cities..."
+                    value={addZoneSearchQuery}
+                    onChange={(e) => setAddZoneSearchQuery(e.target.value)}
+                    className="h-8 text-sm"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                    data-testid="input-add-zone-search"
+                  />
+                </div>
+                <div className="max-h-48 overflow-y-auto">
+                  {filteredZonesToAdd.map(([zoneKey, tz]) => (
                     <DropdownMenuItem
                       key={zoneKey}
-                      onClick={() => handleAddClock(zoneKey)}
+                      onClick={() => {
+                        handleAddClock(zoneKey);
+                        setAddZoneSearchQuery("");
+                      }}
                       data-testid={`menu-item-${zoneKey}`}
                     >
                       <span className="font-medium">{tz.name}</span>
                       <span className="ml-2 text-xs text-muted-foreground">{tz.gmtLabel}</span>
                     </DropdownMenuItem>
-                  );
-                })}
+                  ))}
+                  {filteredZonesToAdd.length === 0 && (
+                    <div className="py-2 px-4 text-sm text-muted-foreground">
+                      No cities found
+                    </div>
+                  )}
+                </div>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
