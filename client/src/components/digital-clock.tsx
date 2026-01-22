@@ -219,7 +219,7 @@ export function DigitalClock({
         ${isBeingDragged ? "bg-yellow-200 dark:bg-yellow-800/50 shadow-lg" : ""}`}
         data-testid={`clock-tile-${selectedZoneKey}`}
       >
-        <div className="flex items-center gap-6 py-10">
+        <div className="flex items-start gap-6 py-10">
           {isDraggable && (
             <div className="text-muted-foreground/50 hover:text-muted-foreground transition-colors">
               <GripVertical className="h-4 w-4" />

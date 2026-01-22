@@ -1,13 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Plus, LayoutGrid, List, Search } from "lucide-react";
+import { LayoutGrid, List, Search, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DigitalClock } from "@/components/digital-clock";
 import {
   DndContext,
@@ -345,20 +340,22 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
       <section className="border-t border-border pt-6">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-sm uppercase text-muted-foreground">Add Time Zone</span>
-            <DropdownMenu onOpenChange={(open) => { if (!open) setAddZoneSearchQuery(""); }}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  size="icon"
-                  disabled={!canAddMoreZones}
-                  className="h-8 w-8 rounded-full"
-                  title={!canAddMoreZones ? "Maximum clocks reached" : "Add another clock"}
-                  data-testid="button-add-timezone"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-64">
+            <Select 
+              value="" 
+              onValueChange={(val) => {
+                handleAddClock(val as TimezoneKey);
+                setAddZoneSearchQuery("");
+              }}
+              onOpenChange={(open) => { if (!open) setAddZoneSearchQuery(""); }}
+              disabled={!canAddMoreZones}
+            >
+              <SelectTrigger 
+                className="w-fit h-auto p-0 border-0 bg-transparent text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground focus:ring-0 focus:ring-offset-0 gap-1"
+                data-testid="button-add-timezone"
+              >
+                <SelectValue placeholder="Add Time Zone" />
+              </SelectTrigger>
+              <SelectContent>
                 <div className="flex items-center gap-2 px-2 pb-2 sticky top-0 bg-popover">
                   <Search className="h-4 w-4 text-muted-foreground" />
                   <Input
@@ -371,28 +368,18 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
                     data-testid="input-add-zone-search"
                   />
                 </div>
-                <div className="max-h-48 overflow-y-auto">
-                  {filteredZonesToAdd.map(([zoneKey, tz]) => (
-                    <DropdownMenuItem
-                      key={zoneKey}
-                      onClick={() => {
-                        handleAddClock(zoneKey);
-                        setAddZoneSearchQuery("");
-                      }}
-                      data-testid={`menu-item-${zoneKey}`}
-                    >
-                      <span className="font-medium">{tz.name}</span>
-                      <span className="ml-2 text-xs text-muted-foreground">{tz.gmtLabel}</span>
-                    </DropdownMenuItem>
-                  ))}
-                  {filteredZonesToAdd.length === 0 && (
-                    <div className="py-2 px-4 text-sm text-muted-foreground">
-                      No cities found
-                    </div>
-                  )}
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                {filteredZonesToAdd.map(([zoneKey, tz]) => (
+                  <SelectItem key={zoneKey} value={zoneKey} data-testid={`menu-item-${zoneKey}`}>
+                    {tz.name} ({tz.gmtLabel})
+                  </SelectItem>
+                ))}
+                {filteredZonesToAdd.length === 0 && (
+                  <div className="py-2 px-4 text-sm text-muted-foreground">
+                    No cities found
+                  </div>
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex items-center gap-2">
