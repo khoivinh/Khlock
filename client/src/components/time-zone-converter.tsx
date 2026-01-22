@@ -18,6 +18,7 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  DragCancelEvent,
 } from "@dnd-kit/core";
 import {
   arrayMove,
@@ -225,6 +226,10 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
     }
   }
 
+  function handleDragCancel(_event: DragCancelEvent) {
+    setActiveId(null);
+  }
+
   function getBaseTime(): Date {
     if (isCustomMode && selectedTime) {
       return selectedTime;
@@ -360,6 +365,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
           collisionDetection={closestCenter}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <SortableContext 
             items={selectedZones} 
