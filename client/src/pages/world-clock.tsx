@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TimeZoneConverter } from "@/components/time-zone-converter";
@@ -7,6 +7,16 @@ import { getCityByKey } from "@/lib/city-lookup";
 export default function WorldClock() {
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  // Detect scroll to minimize header
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 20);
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   function handleTimeUpdate(zoneKey: string, hours: number, minutes: number) {
     const city = getCityByKey(zoneKey);
@@ -28,11 +38,18 @@ export default function WorldClock() {
   }
 
   return (
-    <main className="min-h-screen bg-background px-6 py-16 md:px-12 lg:px-24">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-col gap-6 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
+    <main className="min-h-screen bg-background">
+      {/* Sticky header that minimizes on scroll */}
+      <header 
+        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-all duration-200 ${
+          isScrolled ? "py-3" : "py-8"
+        }`}
+      >
+        <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4">
           <h1 
-            className="font-display font-black tracking-tight text-foreground text-5xl"
+            className={`font-display font-black tracking-tight text-foreground transition-all duration-200 ${
+              isScrolled ? "text-3xl" : "text-5xl"
+            }`}
             data-testid="text-app-title"
           >
             World Khlock
@@ -44,13 +61,17 @@ export default function WorldClock() {
               Show Live Time
             </Button>
           )}
-        </header>
+        </div>
+      </header>
 
-        <TimeZoneConverter
-          isCustomMode={isCustomMode}
-          selectedTime={selectedTime}
-          onTimeUpdate={handleTimeUpdate}
-        />
+      <div className="px-6 py-8 md:px-12 lg:px-24">
+        <div className="mx-auto max-w-4xl">
+          <TimeZoneConverter
+            isCustomMode={isCustomMode}
+            selectedTime={selectedTime}
+            onTimeUpdate={handleTimeUpdate}
+          />
+        </div>
       </div>
     </main>
   );
