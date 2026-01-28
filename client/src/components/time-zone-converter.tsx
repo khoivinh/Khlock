@@ -138,7 +138,7 @@ function SortableClockItem({
 }
 
 const MAX_CLOCKS = 12;
-const STORAGE_KEY = "world-clock-zones";
+const STORAGE_KEY = "world-khlock-zones";
 
 function detectLocalCity(): string {
   try {

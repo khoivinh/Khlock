@@ -1,8 +1,8 @@
-# World Clock Application
+# World Khlock Application
 
 ## Overview
 
-A world clock web application that allows users to track time across multiple time zones. Users can add cities, reorder them with drag and drop functionality, and view times at a glance. The application features a hero clock display for the selected timezone and supports light/dark theme modes.
+A world khlock web application that allows users to track time across multiple time zones. Users can add cities, reorder them with drag and drop functionality, and view times at a glance. The application features a hero clock display for the selected timezone and supports light/dark theme modes.
 
 ## User Preferences
 

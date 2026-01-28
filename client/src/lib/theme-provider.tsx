@@ -13,7 +13,7 @@ const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>
 export function ThemeProvider({
   children,
   defaultTheme = "system",
-  storageKey = "world-clock-theme",
+  storageKey = "world-khlock-theme",
 }: {
   children: React.ReactNode;
   defaultTheme?: Theme;
