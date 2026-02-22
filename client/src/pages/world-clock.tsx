@@ -12,7 +12,7 @@ export default function WorldClock() {
   // Detect scroll to minimize header
   useEffect(() => {
     function handleScroll() {
-      setIsScrolled(window.scrollY > 20);
+      setIsScrolled(window.scrollY > 80);
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
@@ -41,13 +41,13 @@ export default function WorldClock() {
     <main className="min-h-screen bg-background">
       {/* Sticky header that minimizes on scroll */}
       <header
-        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-[padding] duration-200 ${
+        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-[padding] duration-350 ease-in-out ${
           isScrolled ? "py-3" : "py-8"
         }`}
       >
         <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4">
           <h1
-            className={`font-display font-black tracking-tight text-foreground transition-[font-size] duration-200 ${
+            className={`font-display font-black tracking-tight text-foreground transition-[font-size] duration-350 ease-in-out ${
               isScrolled ? "text-3xl" : "text-5xl"
             }`}
             data-testid="text-app-title"
