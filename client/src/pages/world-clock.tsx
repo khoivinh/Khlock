@@ -1,31 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TimeZoneConverter } from "@/components/time-zone-converter";
 import { getCityByKey } from "@/lib/city-lookup";
 
+// Header animation constants
+const SCROLL_RANGE = 120; // px of scroll over which the shrink fully plays out
+const PY_START = 32;      // py-8 = 2rem = 32px
+const PY_END = 12;        // py-3 = 0.75rem = 12px
+const FS_START = 48;      // text-5xl = 3rem = 48px
+const FS_END = 30;        // text-3xl = 1.875rem = 30px
+
 export default function WorldClock() {
   const [isCustomMode, setIsCustomMode] = useState(false);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
 
-  // Detect scroll to minimize header
+  // Scroll-driven header shrink: interpolate styles directly from scrollY
+  // so the header tracks the finger perfectly with no CSS transition snap.
   useEffect(() => {
-    function handleScroll() {
-      setIsScrolled(window.scrollY > 80);
+    function updateHeader() {
+      const ratio = Math.min(1, Math.max(0, window.scrollY / SCROLL_RANGE));
+      if (headerRef.current) {
+        const py = PY_START + (PY_END - PY_START) * ratio;
+        headerRef.current.style.paddingTop = `${py}px`;
+        headerRef.current.style.paddingBottom = `${py}px`;
+      }
+      if (h1Ref.current) {
+        const fs = FS_START + (FS_END - FS_START) * ratio;
+        h1Ref.current.style.fontSize = `${fs}px`;
+        h1Ref.current.style.lineHeight = `${fs}px`;
+      }
     }
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
+
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
   }, []);
 
   function handleTimeUpdate(zoneKey: string, hours: number, minutes: number) {
     const city = getCityByKey(zoneKey);
     if (!city) return;
-    
+
     const now = new Date();
-    // Create a date with the user's input hours/minutes
     const inputTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0);
-    // Convert from the city's timezone to UTC
     const utcTime = new Date(inputTime.getTime() - (city.offset * 3600000) - (inputTime.getTimezoneOffset() * 60000));
 
     setSelectedTime(utcTime);
@@ -39,17 +57,15 @@ export default function WorldClock() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Sticky header that minimizes on scroll */}
+      {/* Sticky header — size is driven directly by scroll position via ref, no CSS transition */}
       <header
-        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-[padding] duration-500 ease-in-out ${
-          isScrolled ? "py-3" : "py-8"
-        }`}
+        ref={headerRef}
+        className="sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 py-8"
       >
         <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4">
           <h1
-            className={`font-display font-black tracking-tight text-foreground transition-[font-size] duration-500 ease-in-out ${
-              isScrolled ? "text-3xl" : "text-5xl"
-            }`}
+            ref={h1Ref}
+            className="font-display font-black tracking-tight text-foreground text-5xl"
             data-testid="text-app-title"
           >
             World Khlock
