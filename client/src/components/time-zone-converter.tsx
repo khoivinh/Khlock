@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, startTransition } from "react";
 import { LayoutGrid, List, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DigitalClock } from "@/components/digital-clock";
@@ -230,7 +230,10 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
     setCurrentTime(new Date());
 
     const interval = setInterval(() => {
-      setCurrentTime(new Date());
+      // Mark as low-priority so React won't interrupt scroll gestures to run this
+      startTransition(() => {
+        setCurrentTime(new Date());
+      });
     }, 1000);
 
     return () => clearInterval(interval);

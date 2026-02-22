@@ -104,6 +104,10 @@
 @layer base {
   * {
     @apply border-border;
+    /* Override tailwindcss-animate's global transition:all base rule.
+       Utility classes (transition-colors, transition-[padding], etc.)
+       live in @layer utilities and still override this correctly. */
+    transition-property: none;
   }
 
   body {

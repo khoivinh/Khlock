@@ -219,8 +219,8 @@ export function DigitalClock({
   if (layout === "list") {
     return (
       <div
-        className={`relative rounded-lg p-4 -m-4 
-        ${isDragActive ? "transition-none" : "transition-all duration-300 ease-out"}
+        className={`relative rounded-lg p-4 -m-4
+        ${isDragActive ? "transition-none" : "transition-[background-color,box-shadow,opacity] duration-300 ease-out"}
         ${isEditing ? "bg-muted shadow-lg ring-2 ring-primary/20" : isDropdownOpen ? "bg-muted shadow-lg" : isDragActive ? "shadow-none bg-transparent" : "hover:bg-muted hover:shadow-lg"}
         ${isNew ? "animate-highlight-yellow" : ""}
         ${isBeingDragged ? "bg-yellow-200 dark:bg-yellow-800/50 shadow-lg" : ""}`}
@@ -310,16 +310,16 @@ export function DigitalClock({
   // Grid layout
   return (
     <div
-      className={`relative rounded-lg p-4 -m-4 mr-4 
-      ${isDragActive ? "transition-none" : "transition-all duration-300 ease-out"}
+      className={`relative rounded-lg p-4 -m-4 mr-4
+      ${isDragActive ? "transition-none" : "transition-[background-color,box-shadow,opacity,transform] duration-300 ease-out"}
       ${
         isEditing
           ? "bg-muted shadow-lg ring-2 ring-primary/20"
           : isDropdownOpen
-            ? "scale-110 bg-muted shadow-lg -translate-y-1"
+            ? "[@media(hover:hover)]:scale-110 bg-muted shadow-lg [@media(hover:hover)]:-translate-y-1"
             : isDragActive
               ? "scale-100 translate-y-0 shadow-none bg-transparent" // Force reset any hover states during drag
-              : "hover:scale-110 hover:bg-muted hover:shadow-lg hover:-translate-y-1"
+              : "[@media(hover:hover)]:hover:scale-110 hover:bg-muted hover:shadow-lg [@media(hover:hover)]:hover:-translate-y-1"
       }
       ${isNew ? "animate-highlight-yellow" : ""}
       ${isBeingDragged ? "bg-yellow-200 dark:bg-yellow-800/50 shadow-lg scale-105" : ""}`}

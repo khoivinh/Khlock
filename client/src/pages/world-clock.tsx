@@ -40,14 +40,14 @@ export default function WorldClock() {
   return (
     <main className="min-h-screen bg-background">
       {/* Sticky header that minimizes on scroll */}
-      <header 
-        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-all duration-200 ${
+      <header
+        className={`sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 transition-[padding] duration-200 ${
           isScrolled ? "py-3" : "py-8"
         }`}
       >
         <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4">
-          <h1 
-            className={`font-display font-black tracking-tight text-foreground transition-all duration-200 ${
+          <h1
+            className={`font-display font-black tracking-tight text-foreground transition-[font-size] duration-200 ${
               isScrolled ? "text-3xl" : "text-5xl"
             }`}
             data-testid="text-app-title"
