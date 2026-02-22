@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { getCityByKey } from "@/lib/city-lookup";
 
 interface WeatherData {
   celsius: number;
@@ -6,26 +7,33 @@ interface WeatherData {
 }
 
 export function useWeather(zoneKey: string | undefined) {
+  const city = zoneKey ? getCityByKey(zoneKey) : undefined;
+
   return useQuery<WeatherData>({
-    queryKey: ["/api/weather", zoneKey],
+    queryKey: ["weather", zoneKey],
     queryFn: async () => {
-      if (!zoneKey) throw new Error("No zone key");
-      const response = await fetch(`/api/weather?city=${zoneKey}`);
+      if (!city) throw new Error("City not found");
+      const response = await fetch(
+        `https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m`
+      );
       if (!response.ok) throw new Error("Failed to fetch weather");
-      return response.json();
+      const data = await response.json();
+      const celsius = Math.round(data.current.temperature_2m);
+      const fahrenheit = Math.round((celsius * 9) / 5 + 32);
+      return { celsius, fahrenheit };
     },
-    enabled: !!zoneKey,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes
+    enabled: !!city,
+    staleTime: 10 * 60 * 1000,
+    refetchInterval: 10 * 60 * 1000,
     retry: 1,
   });
 }
 
 export function getTemperatureColor(celsius: number): string {
-  if (celsius <= 0) return "text-blue-500"; // Freezing
-  if (celsius <= 10) return "text-cyan-500"; // Cold
-  if (celsius <= 18) return "text-green-500"; // Cool
-  if (celsius <= 24) return "text-yellow-500"; // Mild
-  if (celsius <= 30) return "text-orange-500"; // Warm
-  return "text-red-500"; // Hot
+  if (celsius <= 0) return "text-blue-500";
+  if (celsius <= 10) return "text-cyan-500";
+  if (celsius <= 18) return "text-green-500";
+  if (celsius <= 24) return "text-yellow-500";
+  if (celsius <= 30) return "text-orange-500";
+  return "text-red-500";
 }
