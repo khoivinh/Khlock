@@ -310,7 +310,7 @@ export function DigitalClock({
   // Grid layout
   return (
     <div
-      className={`relative rounded-lg p-4 -m-4
+      className={`relative rounded-[15px] px-2.5 py-[15px] sm:rounded-lg sm:p-4 sm:-m-4
       ${isDragActive ? "transition-none" : "transition-[background-color,box-shadow,opacity,transform] duration-300 ease-out"}
       ${
         isEditing
@@ -354,7 +354,7 @@ export function DigitalClock({
             {timezone}
             {weather && (
               <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`}>
-                {weather.fahrenheit}°F
+                {weather.fahrenheit}°F / {weather.celsius}°C
               </span>
             )}
           </p>

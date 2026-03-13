@@ -368,8 +368,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
         />
       </section>
 
-      <section className="border-t border-border pt-6">
-        <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
+      <section className="border-t border-border pt-[25px] sm:pt-6">
+        <div className="mb-[25px] sm:mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <Popover open={addZoneOpen} onOpenChange={(open) => {
               setAddZoneOpen(open);
@@ -459,7 +459,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
             items={selectedZones}
             strategy={layout === "grid" ? rectSortingStrategy : verticalListSortingStrategy}
           >
-            <div className={layout === "grid" ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8" : "flex flex-col gap-4"}>
+            <div className={layout === "grid" ? "grid grid-cols-1 gap-[5px] sm:grid-cols-2 sm:gap-8 lg:grid-cols-3" : "flex flex-col gap-4"}>
               {selectedZones.map((zoneKey, index) => (
                 <SortableClockItem
                   key={zoneKey}
