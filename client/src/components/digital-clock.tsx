@@ -325,11 +325,11 @@ export function DigitalClock({
       ${isBeingDragged ? "bg-yellow-200 dark:bg-yellow-800/50 shadow-lg scale-105" : ""}`}
       data-testid={`clock-tile-${selectedZoneKey}`}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         {/* Drag handle */}
         {isDraggable && (
           <div
-            className="flex-shrink-0 flex items-center justify-center h-8 w-8 -ml-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+            className="flex-shrink-0 flex items-center justify-center h-8 w-8 -ml-1 mt-0.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
             {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
             title="Drag to reorder"
           >
@@ -362,7 +362,7 @@ export function DigitalClock({
 
         {/* Time (right side on mobile, below on desktop) */}
         {isEditing ? (
-          <div className="flex items-center gap-2 sm:hidden">
+          <div className="flex items-start gap-2 sm:hidden">
             <Input
               type="time"
               value={editTime}
@@ -376,7 +376,7 @@ export function DigitalClock({
             </Button>
           </div>
         ) : (
-          <div className="flex items-center gap-2 sm:hidden">
+          <div className="flex items-start gap-2 sm:hidden">
             <p
               className={`font-display text-2xl font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
               onClick={handleTimeClick}
@@ -395,7 +395,7 @@ export function DigitalClock({
           <Button
             variant="ghost"
             size="icon"
-            className="flex-shrink-0 h-8 w-8 -mr-1 text-muted-foreground/50 hover:text-destructive touch-manipulation"
+            className="flex-shrink-0 h-8 w-8 -mr-1 mt-0.5 text-muted-foreground/50 hover:text-destructive touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
               onRemove();
