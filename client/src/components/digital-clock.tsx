@@ -57,7 +57,7 @@ function CitySelector({
     >
       <PopoverTrigger asChild>
         <button
-          className="flex items-start gap-1 text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors focus:outline-none min-h-[44px] touch-manipulation"
+          className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors focus:outline-none py-2 touch-manipulation"
           data-testid="button-city-selector"
         >
           {selectedCity?.name || "Select city"}
@@ -335,7 +335,7 @@ export function DigitalClock({
         {/* Drag handle */}
         {isDraggable && (
           <div
-            className="flex-shrink-0 flex items-center justify-center h-5 w-8 -ml-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
+            className="flex-shrink-0 flex items-start justify-center pt-2.5 pr-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
             {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
             title="Drag to reorder"
           >
@@ -356,7 +356,7 @@ export function DigitalClock({
               {cityName}
             </p>
           )}
-          <p className="mt-0.5 text-xs text-muted-foreground sm:hidden">
+          <p className="text-xs text-muted-foreground sm:hidden">
             {timezone}
             {weather && (
               <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`}>
@@ -382,9 +382,9 @@ export function DigitalClock({
             </Button>
           </div>
         ) : (
-          <div className="flex items-start gap-2 sm:hidden">
+          <div className="flex items-start gap-2 pt-[5px] sm:hidden">
             <p
-              className={`font-display text-2xl font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
+              className={`font-display text-2xl font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
               onClick={handleTimeClick}
               title="Click to edit time"
             >
@@ -401,7 +401,7 @@ export function DigitalClock({
           <Button
             variant="ghost"
             size="icon"
-            className="flex-shrink-0 h-8 w-8 -mr-1 mt-0.5 text-muted-foreground/50 hover:text-destructive touch-manipulation"
+            className="flex-shrink-0 h-auto w-auto py-2 px-px text-muted-foreground/50 hover:text-destructive touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
               onRemove();
@@ -415,7 +415,7 @@ export function DigitalClock({
       </div>
 
       {/* Desktop: time and timezone below the top row */}
-      <div className="hidden sm:block pl-9">
+      <div className="hidden sm:block pl-7">
         {isEditing ? (
           <div className="mt-1 space-y-3 pb-2">
             <Input
@@ -435,9 +435,9 @@ export function DigitalClock({
             </div>
           </div>
         ) : (
-          <div className="mt-1 flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <p
-              className={`font-display text-3xl font-black tracking-tight text-foreground md:text-4xl cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
+              className={`font-display text-[36px] font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
               onClick={handleTimeClick}
               title="Click to edit time"
             >
@@ -448,7 +448,7 @@ export function DigitalClock({
             )}
           </div>
         )}
-        <p className="mt-1 text-xs text-muted-foreground">
+        <p className="mt-[15px] text-xs text-muted-foreground">
           {timezone}
           {weather && (
             <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`} data-testid={`text-temp-${selectedZoneKey}`}>
