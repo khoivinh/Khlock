@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, startTransition } from "react";
-import { LayoutGrid, List, Check, ChevronsUpDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ChevronsUpDown } from "lucide-react";
 import { DigitalClock } from "@/components/digital-clock";
 import {
   DndContext,
@@ -21,7 +20,6 @@ import {
   sortableKeyboardCoordinates,
   useSortable,
   rectSortingStrategy,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -32,6 +30,7 @@ interface TimeZoneConverterProps {
   isCustomMode: boolean;
   selectedTime: Date | null;
   onTimeUpdate: (zoneKey: string, hours: number, minutes: number) => void;
+  onReset: () => void;
 }
 
 interface SortableClockItemProps {
@@ -39,10 +38,9 @@ interface SortableClockItemProps {
   zoneKey: string;
   index: number;
   baseTime: Date;
-  layout: "grid" | "list";
+  heroDate: Date;
   isNew: boolean;
   onZoneChange: (index: number, zoneKey: string) => void;
-  otherZoneKeys: string[];
   onTimeUpdate: (zoneKey: string, hours: number, minutes: number) => void;
   onRemove: (zoneKey: string) => void;
   allZones: string[];
@@ -54,10 +52,9 @@ function SortableClockItem({
   zoneKey,
   index,
   baseTime,
-  layout,
+  heroDate,
   isNew,
   onZoneChange,
-  otherZoneKeys,
   onTimeUpdate,
   onRemove,
   allZones,
@@ -82,15 +79,14 @@ function SortableClockItem({
 
   const city = getCityByKey(zoneKey);
 
-  const activeIndex = active ? allZones.indexOf(active.id as string) : -1;
   const overIndex = over ? allZones.indexOf(over.id as string) : -1;
+  const currentIndex = allZones.indexOf(id);
   const isBeingHoveredOver = over?.id === id && active?.id !== id;
 
-  const showBeforeIndicator = isBeingHoveredOver && activeIndex > overIndex;
-  const showAfterIndicator = isBeingHoveredOver && activeIndex < overIndex;
+  // Always show indicator on the LEFT of the destination
+  const showLeftIndicator = isBeingHoveredOver;
 
   return (
-    // listeners removed from here — moved to the grip handle inside DigitalClock
     <div
       ref={setNodeRef}
       style={style}
@@ -98,19 +94,8 @@ function SortableClockItem({
       className="relative"
       data-testid={`draggable-zone-${zoneKey}`}
     >
-      {showBeforeIndicator && (
-        layout === "grid" ? (
-          <div className="absolute -left-4 top-0 bottom-0 w-1 bg-primary rounded-full" />
-        ) : (
-          <div className="absolute -top-2 left-0 right-0 h-1 bg-primary rounded-full" />
-        )
-      )}
-      {showAfterIndicator && (
-        layout === "grid" ? (
-          <div className="absolute -right-4 top-0 bottom-0 w-1 bg-primary rounded-full" />
-        ) : (
-          <div className="absolute -bottom-2 left-0 right-0 h-1 bg-primary rounded-full" />
-        )
+      {showLeftIndicator && (
+        <div className="absolute -left-[5px] top-0 bottom-0 w-1 bg-[#3c83f6] rounded-[4px]" />
       )}
 
       <DigitalClock
@@ -120,16 +105,15 @@ function SortableClockItem({
         isSelectable
         selectedZoneKey={zoneKey}
         onZoneChange={(newZone) => onZoneChange(index, newZone)}
-        otherZoneKeys={otherZoneKeys}
         isNew={isNew}
         isDraggable
         isBeingDragged={isDragging}
-        layout={layout}
         zoneKey={zoneKey}
         onTimeUpdate={onTimeUpdate}
         onRemove={() => onRemove(zoneKey)}
         isDragActive={isDragActive}
         dragHandleListeners={listeners}
+        heroDate={heroDate}
       />
     </div>
   );
@@ -178,7 +162,7 @@ function migrateOldKeys(keys: string[]): string[] {
 
 const DEFAULT_ZONES = ["paris_FR", "newYork_US", "losAngeles_US"];
 
-export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: TimeZoneConverterProps) {
+export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, onReset }: TimeZoneConverterProps) {
   const [currentTime, setCurrentTime] = useState<Date | null>(null);
   const [selectedZones, setSelectedZones] = useState<string[]>(() => {
     const stored = localStorage.getItem(STORAGE_KEY);
@@ -196,7 +180,6 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
   const [heroZone, setHeroZone] = useState<string>("london_GB");
   const [newlyAddedZone, setNewlyAddedZone] = useState<string | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [layout, setLayout] = useState<"grid" | "list">("grid");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -266,10 +249,14 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
   const [addZoneOpen, setAddZoneOpen] = useState(false);
   const [addZoneSearchQuery, setAddZoneSearchQuery] = useState("");
 
-  const filteredCitiesToAdd = searchCities(addZoneSearchQuery, 100)
-    .filter((city) => !selectedZones.includes(city.key));
+  const allFilteredCities = searchCities(addZoneSearchQuery, 100);
+  const alreadyDisplayedCities = allFilteredCities.filter((city) => selectedZones.includes(city.key));
+  const filteredCitiesToAdd = allFilteredCities.filter((city) => !selectedZones.includes(city.key));
 
   const canAddMoreZones = selectedZones.length < MAX_CLOCKS;
+
+  // Determine the empty state message
+  const showAlreadyDisplayed = filteredCitiesToAdd.length === 0 && alreadyDisplayedCities.length > 0;
 
   function handleDragStart(event: DragStartEvent) {
     setActiveId(event.active.id as string);
@@ -305,10 +292,6 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
       return selectedTime;
     }
     return currentTime || new Date();
-  }
-
-  function getOtherZoneKeys(currentIndex: number): string[] {
-    return selectedZones.filter((_, index) => index !== currentIndex);
   }
 
   if (!currentTime && !isCustomMode) {
@@ -352,24 +335,27 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
 
   const baseTime = getBaseTime();
   const heroCity = getCityByKey(heroZone);
+  const heroTime = heroCity ? getTimeInCityZone(baseTime, heroCity.offset) : baseTime;
   const activeCity = activeId ? getCityByKey(activeId) : null;
 
   return (
     <div className="space-y-16">
       <section>
         <DigitalClock
-          time={heroCity ? getTimeInCityZone(baseTime, heroCity.offset) : baseTime}
+          time={heroTime}
           cityName={heroCity?.name || heroZone}
           timezone={heroCity?.gmtLabel || ""}
           isHero
           showSeconds={!isCustomMode}
           zoneKey={heroZone}
           onTimeUpdate={onTimeUpdate}
+          isCustomMode={isCustomMode}
+          onReset={onReset}
         />
       </section>
 
       <section className="border-t border-border pt-[25px] sm:pt-6">
-        <div className="mb-[25px] sm:mb-8 flex items-center justify-between flex-wrap gap-4">
+        <div className="mb-[25px] sm:mb-8 relative">
           <div className="flex items-center gap-2">
             <Popover open={addZoneOpen} onOpenChange={(open) => {
               setAddZoneOpen(open);
@@ -385,7 +371,13 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
                   <ChevronsUpDown className="h-3 w-3 opacity-50" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent className="w-[280px] p-0" align="start" collisionPadding={20}>
+              <PopoverContent
+                className="w-[var(--radix-popover-trigger-width)] min-w-[280px] p-0 sm:w-[var(--radix-popover-content-available-width)]"
+                align="start"
+                collisionPadding={20}
+                sideOffset={8}
+                style={{ maxWidth: "calc(100vw - 48px)" }}
+              >
                 <Command shouldFilter={false}>
                   <CommandInput
                     placeholder="Search cities..."
@@ -394,7 +386,9 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
                     data-testid="input-add-zone-search"
                   />
                   <CommandList>
-                    <CommandEmpty>No cities found.</CommandEmpty>
+                    <CommandEmpty>
+                      {showAlreadyDisplayed ? "Already displayed." : "No cities found."}
+                    </CommandEmpty>
                     <CommandGroup>
                       {filteredCitiesToAdd.map((city) => (
                         <CommandItem
@@ -421,31 +415,6 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
               </PopoverContent>
             </Popover>
           </div>
-
-          {/* View toggle hidden on mobile */}
-          <div className="hidden md:flex items-center gap-2">
-            <span className="text-sm uppercase text-muted-foreground">View</span>
-            <Button
-              variant={layout === "grid" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setLayout("grid")}
-              className="h-8 w-8 rounded-full"
-              title="Grid view"
-              data-testid="button-grid-view"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={layout === "list" ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setLayout("list")}
-              className="h-8 w-8 rounded-full"
-              title="List view"
-              data-testid="button-list-view"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
         <DndContext
@@ -457,9 +426,9 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
         >
           <SortableContext
             items={selectedZones}
-            strategy={layout === "grid" ? rectSortingStrategy : verticalListSortingStrategy}
+            strategy={rectSortingStrategy}
           >
-            <div className={layout === "grid" ? "grid grid-cols-1 gap-[5px] sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3" : "flex flex-col gap-4"}>
+            <div className="grid grid-cols-1 gap-[5px] sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
               {selectedZones.map((zoneKey, index) => (
                 <SortableClockItem
                   key={zoneKey}
@@ -467,10 +436,9 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
                   zoneKey={zoneKey}
                   index={index}
                   baseTime={baseTime}
-                  layout={layout}
+                  heroDate={heroTime}
                   isNew={newlyAddedZone === zoneKey}
                   onZoneChange={handleZoneChange}
-                  otherZoneKeys={getOtherZoneKeys(index)}
                   onTimeUpdate={onTimeUpdate}
                   onRemove={handleRemoveClock}
                   allZones={selectedZones}
@@ -482,7 +450,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
 
           <DragOverlay>
             {activeId && activeCity ? (
-              <div className="opacity-90 shadow-xl">
+              <div className="opacity-90">
                 <DigitalClock
                   time={getTimeInCityZone(baseTime, activeCity.offset)}
                   cityName={activeCity.name}
@@ -490,7 +458,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate }: 
                   isSelectable={false}
                   isDraggable
                   isBeingDragged
-                  layout={layout}
+                  heroDate={heroTime}
                 />
               </div>
             ) : null}

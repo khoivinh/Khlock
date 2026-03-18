@@ -1,6 +1,4 @@
 import { useState, useEffect, useRef } from "react";
-import { RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { TimeZoneConverter } from "@/components/time-zone-converter";
 import { getCityByKey } from "@/lib/city-lookup";
 
@@ -57,7 +55,7 @@ export default function WorldClock() {
 
   return (
     <main className="min-h-screen bg-background">
-      {/* Sticky header — size is driven directly by scroll position via ref, no CSS transition */}
+      {/* Sticky header */}
       <header
         ref={headerRef}
         className="sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 py-8"
@@ -70,13 +68,6 @@ export default function WorldClock() {
           >
             Khlock
           </h1>
-
-          {isCustomMode && (
-            <Button onClick={handleReset} data-testid="button-show-live-time" className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Show Live Time
-            </Button>
-          )}
         </div>
       </header>
 
@@ -86,6 +77,7 @@ export default function WorldClock() {
             isCustomMode={isCustomMode}
             selectedTime={selectedTime}
             onTimeUpdate={handleTimeUpdate}
+            onReset={handleReset}
           />
         </div>
       </div>

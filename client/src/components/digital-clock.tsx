@@ -1,8 +1,7 @@
 import React, { useState } from "react";
-import { GripVertical, X, Check, ChevronsUpDown } from "lucide-react";
+import { GripVertical, MoreHorizontal, Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MeetingPlannerModal } from "@/components/meeting-planner-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
@@ -19,23 +18,24 @@ interface DigitalClockProps {
   isSelectable?: boolean;
   selectedZoneKey?: string;
   onZoneChange?: (zoneKey: string) => void;
-  otherZoneKeys?: string[];
   isNew?: boolean;
   isDraggable?: boolean;
   isBeingDragged?: boolean;
-  layout?: "grid" | "list";
   zoneKey?: string;
   onTimeUpdate?: (zoneKey: string, hours: number, minutes: number) => void;
   onRemove?: () => void;
   isDragActive?: boolean;
   dragHandleListeners?: Record<string, unknown>;
+  heroDate?: Date;
+  isCustomMode?: boolean;
+  onReset?: () => void;
 }
 
-function CitySelector({ 
-  selectedCityKey, 
-  onCityChange, 
-  onOpenChange 
-}: { 
+function CitySelector({
+  selectedCityKey,
+  onCityChange,
+  onOpenChange
+}: {
   selectedCityKey: string;
   onCityChange: (cityKey: string) => void;
   onOpenChange: (open: boolean) => void;
@@ -47,8 +47,8 @@ function CitySelector({
   const filteredCities = searchCities(searchValue, 100);
 
   return (
-    <Popover 
-      open={open} 
+    <Popover
+      open={open}
       onOpenChange={(isOpen) => {
         setOpen(isOpen);
         onOpenChange(isOpen);
@@ -66,8 +66,8 @@ function CitySelector({
       </PopoverTrigger>
       <PopoverContent className="w-[280px] p-0" align="start" collisionPadding={20}>
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder="Search cities..." 
+          <CommandInput
+            placeholder="Search cities..."
             value={searchValue}
             onValueChange={setSearchValue}
             data-testid="input-city-search"
@@ -108,6 +108,24 @@ function CitySelector({
   );
 }
 
+function getDayIndicator(tileTime: Date, heroDate?: Date): "next" | "prev" | null {
+  if (!heroDate) return null;
+  const tileDay = tileTime.getDate();
+  const tileMonth = tileTime.getMonth();
+  const tileYear = tileTime.getFullYear();
+  const heroDay = heroDate.getDate();
+  const heroMonth = heroDate.getMonth();
+  const heroYear = heroDate.getFullYear();
+
+  if (tileYear > heroYear || (tileYear === heroYear && (tileMonth > heroMonth || (tileMonth === heroMonth && tileDay > heroDay)))) {
+    return "next";
+  }
+  if (tileYear < heroYear || (tileYear === heroYear && (tileMonth < heroMonth || (tileMonth === heroMonth && tileDay < heroDay)))) {
+    return "prev";
+  }
+  return null;
+}
+
 export function DigitalClock({
   time,
   cityName,
@@ -117,16 +135,17 @@ export function DigitalClock({
   isSelectable = false,
   selectedZoneKey,
   onZoneChange,
-  otherZoneKeys = [],
   isNew = false,
   isDraggable = false,
   isBeingDragged = false,
-  layout = "grid",
   zoneKey,
   onTimeUpdate,
   onRemove,
   isDragActive = false,
   dragHandleListeners,
+  heroDate,
+  isCustomMode = false,
+  onReset,
 }: DigitalClockProps) {
   const hours = time.getHours().toString().padStart(2, "0");
   const minutes = time.getMinutes().toString().padStart(2, "0");
@@ -162,11 +181,19 @@ export function DigitalClock({
     setEditTime("");
   }
 
+  function handleRemoveWithConfirm() {
+    if (onRemove && confirm("Remove this clock?")) {
+      onRemove();
+    }
+  }
+
+  const dayIndicator = !isHero ? getDayIndicator(time, heroDate) : null;
+
   if (isHero) {
     return (
       <div className="flex items-start justify-between">
-        <div>
-          <p 
+        <div className="flex-1 min-w-0">
+          <p
             className="text-sm font-medium uppercase tracking-wide text-muted-foreground"
             data-testid="text-hero-city"
           >
@@ -199,122 +226,35 @@ export function DigitalClock({
               {timeString}
             </p>
           )}
-          <p 
-            className="mt-2 text-sm text-muted-foreground"
+          <div
+            className="mt-2 flex items-center justify-between"
             data-testid="text-hero-timezone"
           >
-            {timezone}
-            {weather && (
-              <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`} data-testid="text-hero-temperature">
-                {weather.fahrenheit}°F / {weather.celsius}°C
-              </span>
+            <p className="text-sm text-muted-foreground">
+              {timezone}
+              {weather && (
+                <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`} data-testid="text-hero-temperature">
+                  {weather.fahrenheit}°F / {weather.celsius}°C
+                </span>
+              )}
+            </p>
+            {isCustomMode && onReset && (
+              <button
+                onClick={onReset}
+                className="font-semibold text-sm uppercase text-[#4e82ee] px-2.5 py-[7px] cursor-pointer hover:opacity-80 transition-opacity"
+                data-testid="button-reset-time"
+              >
+                Reset Time
+              </button>
             )}
-          </p>
+          </div>
         </div>
         <ThemeToggle />
       </div>
     );
   }
 
-  if (layout === "list") {
-    return (
-      <div
-        className={`relative rounded-[15px] p-4 -m-4
-        ${isDragActive ? "transition-none" : "transition-[background-color,box-shadow,opacity] duration-300 ease-out"}
-        ${
-          isBeingDragged
-            ? "bg-[#fdf19d] dark:bg-[#4a4020] border border-[#ffedbd] dark:border-[#5c4f2a] shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
-            : isEditing || isDropdownOpen
-              ? "bg-[#fdf7ca] dark:bg-[#3d3520] border border-[#ffedbd] dark:border-[#5c4f2a]"
-              : isDragActive
-                ? "shadow-none bg-transparent"
-                : "[@media(hover:hover)]:hover:bg-[#f0f0f0] [@media(hover:hover)]:dark:hover:bg-[#2a2a2a]"
-        }
-        ${isNew ? "animate-highlight-yellow" : ""}`}
-        data-testid={`clock-tile-${selectedZoneKey}`}
-      >
-        <div className="flex items-start gap-6 py-10">
-          {isDraggable && (
-            <div
-              className="flex items-center justify-center min-h-[44px] min-w-[44px] -ml-2 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing touch-none"
-              {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
-              title="Drag to reorder"
-            >
-              <GripVertical className="h-5 w-5" />
-            </div>
-          )}
-
-          <div className="w-32">
-            {isSelectable && selectedZoneKey && onZoneChange ? (
-              <CitySelector 
-                selectedCityKey={selectedZoneKey} 
-                onCityChange={onZoneChange}
-                onOpenChange={setIsDropdownOpen}
-              />
-            ) : (
-              <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {cityName}
-              </p>
-            )}
-          </div>
-
-          {isEditing ? (
-            <div className="flex items-center gap-4">
-              <Input
-                type="time"
-                value={editTime}
-                onChange={(e) => setEditTime(e.target.value)}
-                className="font-display text-3xl font-black h-14 px-4 w-40"
-                autoFocus
-              />
-              <Button onClick={handleUpdateClick}>Update Clock</Button>
-              <Button variant="ghost" onClick={handleCancelEdit}>Cancel</Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <p
-                className={`font-display text-6xl font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
-                onClick={handleTimeClick}
-                title="Click to edit time"
-              >
-                {timeString}
-              </p>
-              {selectedZoneKey && otherZoneKeys.length > 0 && (
-                <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
-              )}
-            </div>
-          )}
-
-          <p className="text-xs text-muted-foreground">
-            {timezone}
-            {weather && (
-              <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`} data-testid={`text-temp-${selectedZoneKey}`}>
-                {weather.fahrenheit}°F / {weather.celsius}°C
-              </span>
-            )}
-          </p>
-
-          {onRemove && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto min-h-[44px] min-w-[44px] text-muted-foreground/50 hover:text-destructive touch-manipulation"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              title="Remove clock"
-              data-testid={`button-remove-${selectedZoneKey}`}
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  // Grid layout
+  // Grid layout (only layout now)
   return (
     <div
       className={`relative rounded-[15px] px-2.5 pt-[15px] pb-5
@@ -356,17 +296,23 @@ export function DigitalClock({
               {cityName}
             </p>
           )}
-          <p className="text-xs text-muted-foreground sm:hidden">
-            {timezone}
+          {/* Mobile: zone + temp inline below city name */}
+          <p className={`text-xs text-muted-foreground sm:hidden flex items-center ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
+            <span>{timezone}</span>
+            {dayIndicator && (
+              <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px]">
+                {dayIndicator === "next" ? "Next Day" : "Prev Day"}
+              </span>
+            )}
             {weather && (
-              <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`}>
+              <span className={getTemperatureColor(weather.celsius)}>
                 {weather.fahrenheit}°F / {weather.celsius}°C
               </span>
             )}
           </p>
         </div>
 
-        {/* Time (right side on mobile, below on desktop) */}
+        {/* Time (right side on mobile) */}
         {isEditing ? (
           <div className="flex items-start gap-2 sm:hidden">
             <Input
@@ -378,7 +324,7 @@ export function DigitalClock({
             />
             <Button size="sm" onClick={handleUpdateClick}>OK</Button>
             <Button size="sm" variant="ghost" onClick={handleCancelEdit}>
-              <X className="h-3 w-3" />
+              <MoreHorizontal className="h-3 w-3" />
             </Button>
           </div>
         ) : (
@@ -390,27 +336,22 @@ export function DigitalClock({
             >
               {timeString}
             </p>
-            {selectedZoneKey && otherZoneKeys.length > 0 && (
-              <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
-            )}
           </div>
         )}
 
-        {/* Remove button */}
+        {/* Ellipsis menu button */}
         {onRemove && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="flex-shrink-0 h-auto w-auto py-2 px-px text-muted-foreground/50 hover:text-destructive touch-manipulation"
+          <button
+            className="flex-shrink-0 flex items-center justify-center py-[11px] px-[5px] rounded-md text-muted-foreground/50 hover:text-foreground transition-colors touch-manipulation"
             onClick={(e) => {
               e.stopPropagation();
-              onRemove();
+              handleRemoveWithConfirm();
             }}
-            title="Remove clock"
+            title="Options"
             data-testid={`button-remove-${selectedZoneKey}`}
           >
-            <X className="h-4 w-4" />
-          </Button>
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
         )}
       </div>
 
@@ -443,15 +384,17 @@ export function DigitalClock({
             >
               {timeString}
             </p>
-            {selectedZoneKey && otherZoneKeys.length > 0 && (
-              <MeetingPlannerModal hostZoneKey={selectedZoneKey} otherZoneKeys={otherZoneKeys} />
-            )}
           </div>
         )}
-        <p className="mt-[15px] text-xs text-muted-foreground">
-          {timezone}
+        <p className={`mt-[15px] text-xs text-muted-foreground flex items-center ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
+          <span>{timezone}</span>
+          {dayIndicator && (
+            <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px]">
+              {dayIndicator === "next" ? "Next Day" : "Prev Day"}
+            </span>
+          )}
           {weather && (
-            <span className={`ml-2 ${getTemperatureColor(weather.celsius)}`} data-testid={`text-temp-${selectedZoneKey}`}>
+            <span className={getTemperatureColor(weather.celsius)} data-testid={`text-temp-${selectedZoneKey}`}>
               {weather.fahrenheit}°F / {weather.celsius}°C
             </span>
           )}
