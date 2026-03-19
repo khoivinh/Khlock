@@ -254,7 +254,7 @@ export function DigitalClock({
                     type="time"
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
-                    className="time-left-align font-display text-[28px] font-black leading-normal bg-transparent border-none outline-none appearance-none p-0 flex-1 min-w-0 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                    className="font-display text-[28px] font-black leading-normal bg-transparent border-none outline-none appearance-none p-0 w-[5ch] min-w-0 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
                     autoFocus
                   />
                   <button
