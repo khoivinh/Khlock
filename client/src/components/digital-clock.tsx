@@ -76,10 +76,10 @@ function CitySelector({
     >
       <PopoverTrigger asChild>
         <button
-          className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors focus:outline-none py-2 touch-manipulation"
+          className="flex items-center gap-1 text-sm font-medium uppercase tracking-wide text-muted-foreground hover:text-foreground transition-colors focus:outline-none py-2 touch-manipulation text-left"
           data-testid="button-city-selector"
         >
-          {selectedCity?.name || "Select city"}
+          <span className="truncate">{selectedCity?.name || "Select city"}</span>
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
         </button>
       </PopoverTrigger>
@@ -172,11 +172,14 @@ export function DigitalClock({
   const seconds = time.getSeconds().toString().padStart(2, "0");
 
   const timeString = showSeconds ? `${hours}:${minutes}:${seconds}` : `${hours}:${minutes}`;
+  const amPm = time.getHours() >= 12 ? "PM" : "AM";
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editTime, setEditTime] = useState("");
   const editContainerRef = useRef<HTMLDivElement>(null);
+
+  const editAmPm = editTime ? (parseInt(editTime.split(":")[0]) >= 12 ? "PM" : "AM") : amPm;
 
   // Fetch weather data for this timezone
   const { data: weather } = useWeather(zoneKey || selectedZoneKey);
@@ -349,15 +352,18 @@ export function DigitalClock({
 
         {/* Time (right side on mobile) */}
         {isEditing ? (
-          <div className="flex items-start shrink-0 sm:hidden">
-            <div className="flex items-start gap-[10px] border border-[#c4c7cc] rounded-[8px] pl-[16px] pr-[10px] pt-[9px] pb-[10px] bg-transparent">
-              <Input
-                type="time"
-                value={editTime}
-                onChange={(e) => setEditTime(e.target.value)}
-                className="font-display text-2xl font-black h-auto p-0 border-0 shadow-none focus-visible:ring-0 w-[72px] leading-[33px] tracking-[-0.6px] bg-transparent [&::-webkit-calendar-picker-indicator]:hidden"
-                autoFocus
-              />
+          <div className="shrink-0 sm:hidden">
+            <div className="flex items-center gap-[10px] border border-[#c4c7cc] rounded-[8px] pl-[16px] pr-[10px] pt-[9px] pb-[10px] bg-transparent">
+              <div className="flex items-baseline shrink-0">
+                <input
+                  type="text"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="font-display text-[24px] font-black leading-[33px] tracking-[-0.6px] bg-transparent outline-none w-[60px]"
+                  autoFocus
+                />
+                <span className="font-display text-[14px] font-black leading-[33px] tracking-[-0.6px]">{editAmPm}</span>
+              </div>
               <button
                 onClick={handleUpdateClick}
                 className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-sm leading-[21px] tracking-[-0.1px] shrink-0"
@@ -397,15 +403,18 @@ export function DigitalClock({
       {/* Desktop: time and timezone below the top row */}
       <div className="hidden sm:block pl-7">
         {isEditing ? (
-          <div className="mt-1">
-            <div className="flex items-start gap-[15px] border border-[#c4c7cc] rounded-[8px] pl-[16px] pr-[12px] pt-[11px] pb-[12px] w-full bg-transparent">
-              <Input
-                type="time"
-                value={editTime}
-                onChange={(e) => setEditTime(e.target.value)}
-                className="font-display text-[36px] font-black h-auto p-0 border-0 shadow-none focus-visible:ring-0 flex-1 leading-[36px] tracking-[-0.6px] bg-transparent [&::-webkit-calendar-picker-indicator]:hidden"
-                autoFocus
-              />
+          <div>
+            <div className="inline-flex items-center gap-[15px] border border-[#c4c7cc] rounded-[8px] pl-[16px] pr-[12px] pt-[11px] pb-[12px] bg-transparent overflow-clip">
+              <div className="flex items-baseline shrink-0">
+                <input
+                  type="text"
+                  value={editTime}
+                  onChange={(e) => setEditTime(e.target.value)}
+                  className="font-display text-[36px] font-black leading-[36px] tracking-[-0.6px] bg-transparent outline-none w-[120px]"
+                  autoFocus
+                />
+                <span className="font-display text-[14px] font-black leading-[36px] tracking-[-0.6px] ml-1">{editAmPm}</span>
+              </div>
               <button
                 onClick={handleUpdateClick}
                 className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-sm leading-[21px] tracking-[-0.1px] shrink-0"
