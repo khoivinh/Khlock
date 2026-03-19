@@ -249,12 +249,13 @@ export function DigitalClock({
                   </button>
                 </div>
                 {/* Mobile edit */}
-                <div className="flex sm:hidden w-full items-center gap-[10px] border border-[#c4c7cc] rounded-[10px] pl-[13px] pr-[11px] py-[10px]">
+                <div className="flex sm:hidden w-full items-center justify-between gap-[10px] border border-[#c4c7cc] rounded-[10px] pl-[13px] pr-[11px] py-[10px]">
                   <input
                     type="time"
                     value={editTime}
                     onChange={(e) => setEditTime(e.target.value)}
-                    className="font-display text-[28px] font-black leading-normal bg-transparent border-none outline-none appearance-none p-0 flex-1 min-w-0 text-left [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                    className="font-display text-[28px] font-black leading-normal bg-transparent border-none outline-none appearance-none p-0 flex-1 min-w-0 [&::-webkit-calendar-picker-indicator]:hidden [&::-webkit-inner-spin-button]:hidden [&::-webkit-datetime-edit-fields-wrapper]:p-0"
+                    style={{ textAlign: "left", WebkitTextAlign: "left" } as React.CSSProperties}
                     autoFocus
                   />
                   <button
