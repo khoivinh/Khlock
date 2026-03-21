@@ -69,6 +69,11 @@ export function Sidebar({
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const hasBeenOpened = useRef(false);
+
+  useEffect(() => {
+    if (open) hasBeenOpened.current = true;
+  }, [open]);
 
   // Close on escape key
   useEffect(() => {
@@ -142,7 +147,10 @@ export function Sidebar({
           height: "calc(100vh - 56px)",
           animation: open
             ? "sidebar-open 350ms cubic-bezier(0.32, 0.72, 0, 1) forwards"
-            : "sidebar-close 250ms cubic-bezier(0.32, 0.72, 0, 1) forwards",
+            : hasBeenOpened.current
+              ? "sidebar-close 250ms cubic-bezier(0.32, 0.72, 0, 1) forwards"
+              : "none",
+          opacity: !open && !hasBeenOpened.current ? 0 : undefined,
         }}
       >
         <div
