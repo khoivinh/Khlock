@@ -89,7 +89,7 @@ export default function WorldClock() {
         ref={headerRef}
         className="sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 py-8"
       >
-        <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4 pl-[10px] pr-[10px]">
+        <div className="mx-auto max-w-4xl flex flex-row items-start justify-between gap-4 pl-[10px] pr-[10px]">
           <h1
             ref={h1Ref}
             className="font-display font-black tracking-tight text-foreground text-5xl"
