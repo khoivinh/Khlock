@@ -77,6 +77,16 @@ export function Sidebar({
     if (open) hasBeenOpened.current = true;
   }, [open]);
 
+  // Lock body scroll when sidebar is open
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
+
   // Close on escape key
   useEffect(() => {
     if (!open) return;
@@ -162,7 +172,7 @@ export function Sidebar({
           }`}
         >
           {/* Header */}
-          <div className="flex items-center gap-[23px]">
+          <div className="flex items-start gap-[23px]">
             <div className="flex-1 min-w-0">
               <button
                 className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap"

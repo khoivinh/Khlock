@@ -432,6 +432,23 @@ export function DigitalClock({
               </div>
             </div>
           )}
+
+          {/* Mobile: zone + temp below city name */}
+          {!isEditing && (
+            <p className={`text-xs text-muted-foreground sm:hidden flex items-center flex-wrap ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
+              <span>{timezone}</span>
+              {dayIndicator && (
+                <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px] whitespace-nowrap shrink-0">
+                  {dayIndicator === "next" ? "Next Day" : "Prev Day"}
+                </span>
+              )}
+              {!isCustomMode && weather && (
+                <span className={getTemperatureColor(weather.celsius)}>
+                  {weather.fahrenheit}°F / {weather.celsius}°C
+                </span>
+              )}
+            </p>
+          )}
         </div>
 
         {/* Time (right side on mobile) — hidden when editing */}
@@ -464,22 +481,6 @@ export function DigitalClock({
           </button>
         )}
       </div>
-      {/* Mobile: zone + temp below main row, full tile width */}
-      {!isEditing && (
-        <p className={`text-xs text-muted-foreground sm:hidden flex items-center flex-wrap px-2.5 ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
-          <span>{timezone}</span>
-          {dayIndicator && (
-            <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px] whitespace-nowrap shrink-0">
-              {dayIndicator === "next" ? "Next Day" : "Prev Day"}
-            </span>
-          )}
-          {!isCustomMode && weather && (
-            <span className={getTemperatureColor(weather.celsius)}>
-              {weather.fahrenheit}°F / {weather.celsius}°C
-            </span>
-          )}
-        </p>
-      )}
     </div>
   );
 }

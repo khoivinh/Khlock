@@ -224,8 +224,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
     }),
     useSensor(TileTouchSensor, {
       activationConstraint: {
-        delay: 350,
-        tolerance: 8,
+        delay: 600,
+        tolerance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -286,6 +286,14 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
 
   const handleZoneChange = useCallback((index: number, zoneKey: string) => {
     setSelectedZones((prev) => {
+      const existingIndex = prev.indexOf(zoneKey);
+      if (existingIndex !== -1 && existingIndex !== index) {
+        // Swap positions instead of creating duplicate keys
+        const newZones = [...prev];
+        newZones[existingIndex] = newZones[index];
+        newZones[index] = zoneKey;
+        return newZones;
+      }
       const newZones = [...prev];
       newZones[index] = zoneKey;
       return newZones;
