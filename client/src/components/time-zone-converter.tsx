@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, startTransition, type SetStateAction } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo, startTransition, type SetStateAction } from "react";
 import { ChevronsUpDown } from "lucide-react";
 import { DigitalClock } from "@/components/digital-clock";
 import {
@@ -270,6 +270,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
 
   useEffect(() => {
     if (isCustomMode) return;
+    // Pause clock tick during drag — prevents re-renders that cancel touch sensor activation
+    if (activeId !== null) return;
 
     setCurrentTime(new Date());
 
@@ -281,7 +283,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isCustomMode]);
+  }, [isCustomMode, activeId]);
 
   const handleZoneChange = useCallback((index: number, zoneKey: string) => {
     onZonesChange((prev: string[]) => {
@@ -368,6 +370,19 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
     document.body.style.overflow = "";
     document.body.style.touchAction = "";
   }
+
+  // Stabilize zones reference so SortableContext doesn't re-initialize
+  // when cloud sync or other updates create a new array with identical
+  // contents — which would cancel pending touch sensor activations
+  const prevZonesRef = useRef(selectedZones);
+  const stableZones = useMemo(() => {
+    const prev = prevZonesRef.current;
+    if (prev.length === selectedZones.length && prev.every((z, i) => z === selectedZones[i])) {
+      return prev;
+    }
+    prevZonesRef.current = selectedZones;
+    return selectedZones;
+  }, [selectedZones]);
 
   function getBaseTime(): Date {
     if (isCustomMode && selectedTime) {
@@ -517,7 +532,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
           onDragCancel={handleDragCancel}
         >
           <SortableContext
-            items={selectedZones}
+            items={stableZones}
             strategy={rectSortingStrategy}
           >
             <div className="grid grid-cols-1 gap-[5px] sm:grid-cols-2 sm:gap-2.5 lg:grid-cols-3">
@@ -554,6 +569,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
                   isDraggable
                   isBeingDragged
                   heroDate={heroTime}
+                  isCustomMode={isCustomMode}
+                  use24Hour={use24Hour}
                 />
               </div>
             ) : null}

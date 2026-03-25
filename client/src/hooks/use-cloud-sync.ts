@@ -76,7 +76,16 @@ function useCloudSyncWithAuth({ preferences, setPreferences }: UseCloudSyncOptio
           await savePreferences(token, prefsRef.current);
         } else {
           const merged = mergePreferences(prefsRef.current, cloud);
-          setPreferences(merged);
+          // Only update state if values actually changed — avoids creating
+          // a new array reference that would interrupt dnd-kit drag sensors
+          const current = prefsRef.current;
+          const zonesChanged = merged.zones.join(",") !== current.zones.join(",");
+          const settingsChanged = merged.use24h !== current.use24h
+            || merged.sortEastToWest !== current.sortEastToWest
+            || merged.theme !== current.theme;
+          if (zonesChanged || settingsChanged) {
+            setPreferences(merged);
+          }
           await savePreferences(token, merged);
         }
 
