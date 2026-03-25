@@ -61,6 +61,8 @@ interface TimeZoneConverterProps {
   use24Hour: boolean;
   sortEastToWest: boolean;
   onSortEastToWestChange: (value: boolean) => void;
+  selectedZones: string[];
+  onZonesChange: (zones: string[]) => void;
 }
 
 interface SortableClockItemProps {
@@ -189,21 +191,29 @@ function migrateOldKeys(keys: string[]): string[] {
 
 const DEFAULT_ZONES = ["paris_FR", "newYork_US", "losAngeles_US"];
 
-export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, onReset, use24Hour, sortEastToWest, onSortEastToWestChange }: TimeZoneConverterProps) {
-  const [currentTime, setCurrentTime] = useState<Date | null>(null);
-  const [selectedZones, setSelectedZones] = useState<string[]>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        const migrated = migrateOldKeys(parsed);
-        return migrated.length > 0 ? migrated : DEFAULT_ZONES;
-      } catch {
-        return DEFAULT_ZONES;
-      }
+export function initZonesFromStorage(): string[] {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    try {
+      const parsed = JSON.parse(stored);
+      const migrated = migrateOldKeys(parsed);
+      return migrated.length > 0 ? migrated : DEFAULT_ZONES;
+    } catch {
+      return DEFAULT_ZONES;
     }
-    return DEFAULT_ZONES;
-  });
+  }
+  return DEFAULT_ZONES;
+}
+
+export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, onReset, use24Hour, sortEastToWest, onSortEastToWestChange, selectedZones, onZonesChange }: TimeZoneConverterProps) {
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+  const setSelectedZones = useCallback((update: string[] | ((prev: string[]) => string[])) => {
+    if (typeof update === "function") {
+      onZonesChange(update(selectedZones));
+    } else {
+      onZonesChange(update);
+    }
+  }, [selectedZones, onZonesChange]);
   const [heroZone, setHeroZone] = useState<string>("london_GB");
   const [newlyAddedZone, setNewlyAddedZone] = useState<string | null>(null);
   const [highlightedZone, setHighlightedZone] = useState<string | null>(null);
@@ -237,10 +247,6 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
     const localCity = detectLocalCity();
     setHeroZone(localCity);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selectedZones));
-  }, [selectedZones]);
 
   // Sort zones east-to-west when toggled on; restore original order when toggled off
   useEffect(() => {

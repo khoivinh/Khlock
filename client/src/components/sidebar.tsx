@@ -1,6 +1,10 @@
 import { useEffect, useRef } from "react";
-import { Monitor, Sun, Moon } from "lucide-react";
+import { Monitor, Sun, Moon, Check, Loader2, CloudOff, AlertCircle } from "lucide-react";
+import { SignInButton, SignOutButton, useUser, useAuth } from "@clerk/clerk-react";
 import { useTheme } from "@/lib/theme-provider";
+import type { SyncStatus } from "@/hooks/use-cloud-sync";
+
+const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 interface ToggleSwitchProps {
   checked: boolean;
@@ -50,6 +54,76 @@ function DrawerToggleIcon({ open }: { open: boolean }) {
   );
 }
 
+function SyncStatusIndicator({ status }: { status: SyncStatus }) {
+  if (status === "idle") return null;
+
+  const config = {
+    syncing: { icon: <Loader2 className="h-3 w-3 animate-spin" />, label: "Syncing..." },
+    synced: { icon: <Check className="h-3 w-3" />, label: "Synced" },
+    offline: { icon: <CloudOff className="h-3 w-3" />, label: "Offline" },
+    error: { icon: <AlertCircle className="h-3 w-3" />, label: "Sync error" },
+  }[status];
+
+  if (!config) return null;
+
+  return (
+    <div className="flex items-center gap-[6px] text-[12px] text-[#9ca3af]">
+      {config.icon}
+      <span>{config.label}</span>
+    </div>
+  );
+}
+
+// Auth header section when Clerk is configured
+function AuthHeader() {
+  const { isSignedIn } = useAuth();
+  const { user } = useUser();
+
+  if (isSignedIn && user) {
+    return (
+      <div className="flex items-center gap-[10px]">
+        <img
+          src={user.imageUrl}
+          alt=""
+          className="w-[28px] h-[28px] rounded-full shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          <p className="text-[14px] font-semibold text-white truncate leading-[18px]">
+            {user.fullName || user.primaryEmailAddress?.emailAddress || "User"}
+          </p>
+          <SignOutButton>
+            <button className="text-[12px] text-[#9ca3af] hover:text-white transition-colors">
+              Sign out
+            </button>
+          </SignOutButton>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <SignInButton mode="modal">
+      <button
+        className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap"
+      >
+        Login or Sign Up
+      </button>
+    </SignInButton>
+  );
+}
+
+// Fallback header when Clerk isn't configured
+function AuthHeaderFallback() {
+  return (
+    <button
+      className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap opacity-50 cursor-not-allowed"
+      disabled
+    >
+      Login or Sign Up
+    </button>
+  );
+}
+
 interface SidebarProps {
   open: boolean;
   onClose: () => void;
@@ -58,6 +132,7 @@ interface SidebarProps {
   sortEastToWest: boolean;
   onToggleSortEastToWest: (value: boolean) => void;
   topOffset?: number;
+  syncStatus: SyncStatus;
 }
 
 export function Sidebar({
@@ -68,6 +143,7 @@ export function Sidebar({
   sortEastToWest,
   onToggleSortEastToWest,
   topOffset = 28,
+  syncStatus,
 }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -174,12 +250,12 @@ export function Sidebar({
           {/* Header */}
           <div className="flex items-start gap-[23px]">
             <div className="flex-1 min-w-0">
-              <button
-                className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap"
-                onClick={() => {/* No-op for now */}}
-              >
-                Login or Sign Up
-              </button>
+              {isClerkConfigured ? <AuthHeader /> : <AuthHeaderFallback />}
+              {syncStatus !== "idle" && (
+                <div className="mt-[8px]">
+                  <SyncStatusIndicator status={syncStatus} />
+                </div>
+              )}
             </div>
             <button
               onClick={onClose}

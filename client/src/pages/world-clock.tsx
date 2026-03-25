@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { TimeZoneConverter } from "@/components/time-zone-converter";
 import { Sidebar, DrawerToggleIcon } from "@/components/sidebar";
 import { getCityByKey } from "@/lib/city-lookup";
+import { useCloudSync } from "@/hooks/use-cloud-sync";
+import { useTheme } from "@/lib/theme-provider";
+import { initZonesFromStorage } from "@/components/time-zone-converter";
 
 // Header animation constants
 const SCROLL_RANGE = 120; // px of scroll over which the shrink fully plays out
@@ -12,6 +15,7 @@ const FS_END = 30;        // text-3xl = 1.875rem = 30px
 
 const USE_24H_KEY = "world-khlock-24h";
 const SORT_ETW_KEY = "world-khlock-sort-etw";
+const ZONES_KEY = "world-khlock-zones";
 
 export default function WorldClock() {
   const [isCustomMode, setIsCustomMode] = useState(false);
@@ -23,6 +27,8 @@ export default function WorldClock() {
   const [sortEastToWest, setSortEastToWest] = useState(() => {
     return localStorage.getItem(SORT_ETW_KEY) === "true";
   });
+  const [selectedZones, setSelectedZones] = useState<string[]>(initZonesFromStorage);
+  const { theme, setTheme } = useTheme();
   const [sidebarTop, setSidebarTop] = useState(28);
   const headerRef = useRef<HTMLElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
@@ -61,6 +67,25 @@ export default function WorldClock() {
   useEffect(() => {
     localStorage.setItem(SORT_ETW_KEY, String(sortEastToWest));
   }, [sortEastToWest]);
+
+  useEffect(() => {
+    localStorage.setItem(ZONES_KEY, JSON.stringify(selectedZones));
+  }, [selectedZones]);
+
+  const { syncStatus } = useCloudSync({
+    preferences: {
+      zones: selectedZones,
+      use24h: use24Hour,
+      sortEastToWest,
+      theme: theme as "light" | "dark" | "system",
+    },
+    setPreferences: useCallback((prefs: { zones: string[]; use24h: boolean; sortEastToWest: boolean; theme: "light" | "dark" | "system" }) => {
+      setSelectedZones(prefs.zones);
+      setUse24Hour(prefs.use24h);
+      setSortEastToWest(prefs.sortEastToWest);
+      setTheme(prefs.theme);
+    }, [setTheme]),
+  });
 
   function handleTimeUpdate(zoneKey: string, hours: number, minutes: number) {
     const city = getCityByKey(zoneKey);
@@ -119,6 +144,7 @@ export default function WorldClock() {
             sortEastToWest={sortEastToWest}
             onToggleSortEastToWest={setSortEastToWest}
             topOffset={sidebarTop}
+            syncStatus={syncStatus}
           />
         </div>
       </div>
@@ -133,6 +159,8 @@ export default function WorldClock() {
             use24Hour={use24Hour}
             sortEastToWest={sortEastToWest}
             onSortEastToWestChange={setSortEastToWest}
+            selectedZones={selectedZones}
+            onZonesChange={setSelectedZones}
           />
         </div>
       </div>
