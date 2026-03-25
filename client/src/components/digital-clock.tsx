@@ -351,19 +351,38 @@ export function DigitalClock({
 
         {/* City name + timezone (left side) */}
         <div className="flex-1 min-w-0">
-          {isSelectable && selectedZoneKey && onZoneChange ? (
-            <div className={isEditing ? "truncate" : ""} data-no-drag>
-              <CitySelector
-                selectedCityKey={selectedZoneKey}
-                onCityChange={onZoneChange}
-                onOpenChange={setIsDropdownOpen}
-              />
+          {/* Mobile: city name + time side by side, full content width */}
+          <div className="flex items-start justify-between sm:block">
+            <div className={`min-w-0 flex-1 sm:flex-none ${isEditing ? "truncate" : "overflow-hidden"}`}>
+              {isSelectable && selectedZoneKey && onZoneChange ? (
+                <div data-no-drag>
+                  <CitySelector
+                    selectedCityKey={selectedZoneKey}
+                    onCityChange={onZoneChange}
+                    onOpenChange={setIsDropdownOpen}
+                  />
+                </div>
+              ) : (
+                <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground whitespace-nowrap text-ellipsis overflow-hidden">
+                  {cityName}
+                </p>
+              )}
             </div>
-          ) : (
-            <p className={`text-sm font-medium uppercase tracking-wide text-muted-foreground ${isEditing ? "truncate" : ""}`}>
-              {cityName}
-            </p>
-          )}
+
+            {/* Mobile time (moved here from outside to give city name full width) */}
+            {!isEditing && (
+              <div className="flex items-start gap-2 pt-[5px] sm:hidden shrink-0">
+                <p
+                  className={`font-display text-2xl font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
+                  onClick={handleTimeClick}
+                  title="Click to edit time"
+                  data-no-drag
+                >
+                  {timeString}
+                </p>
+              </div>
+            )}
+          </div>
 
           {/* Desktop: edit UI or time display */}
           {isEditing ? (
@@ -450,20 +469,6 @@ export function DigitalClock({
             </p>
           )}
         </div>
-
-        {/* Time (right side on mobile) — hidden when editing */}
-        {!isEditing && (
-          <div className="flex items-start gap-2 pt-[5px] sm:hidden">
-            <p
-              className={`font-display text-2xl font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
-              onClick={handleTimeClick}
-              title="Click to edit time"
-              data-no-drag
-            >
-              {timeString}
-            </p>
-          </div>
-        )}
 
         {/* Ellipsis menu button */}
         {onRemove && (

@@ -104,7 +104,7 @@ function AuthHeader() {
   return (
     <SignInButton mode="modal">
       <button
-        className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap"
+        className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[7px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap"
       >
         Login or Sign Up
       </button>
@@ -116,7 +116,7 @@ function AuthHeader() {
 function AuthHeaderFallback() {
   return (
     <button
-      className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[6px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap opacity-50 cursor-not-allowed"
+      className="bg-[#4e82ee] rounded-[6px] px-[12px] pt-[7px] pb-[7px] text-white font-semibold text-[14px] leading-[21px] tracking-[-0.1px] whitespace-nowrap opacity-50 cursor-not-allowed"
       disabled
     >
       Login or Sign Up
@@ -233,7 +233,7 @@ export function Sidebar({
         }`}
         style={{
           top: `${topOffset - 18}px`,
-          height: `calc(100vh - ${topOffset - 18 + 28}px)`,
+          height: `calc(80dvh - ${topOffset - 18 + 28}px)`,
           animation: open
             ? "sidebar-open 350ms cubic-bezier(0.32, 0.72, 0, 1) forwards"
             : hasBeenOpened.current
