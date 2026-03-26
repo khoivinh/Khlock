@@ -44,7 +44,7 @@ function saveSyncState(prefs: SyncablePreferences, updatedAt: string) {
 
 function hasLocalChanges(current: SyncablePreferences): boolean {
   const snapshot = localStorage.getItem(SYNC_SNAPSHOT_KEY);
-  if (!snapshot) return true; // No snapshot = first sync, treat as local changes
+  if (!snapshot) return false; // No snapshot = never synced on this device, cloud should win
   return prefsFingerprint(current) !== snapshot;
 }
 
