@@ -190,8 +190,8 @@ export function DigitalClock({
     const h12 = rawHours % 12 || 12;
     displayHours = h12.toString();
     timeString = showSeconds
-      ? `${displayHours}:${minutes}:${seconds} ${amPm}`
-      : `${displayHours}:${minutes} ${amPm}`;
+      ? `${displayHours}:${minutes}:${seconds}`
+      : `${displayHours}:${minutes}`;
   }
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -288,12 +288,13 @@ export function DigitalClock({
               </div>
             ) : (
               <p
-                className="font-display text-[60px] font-black tracking-[-2.4px] text-foreground leading-[60px] md:text-[96px] md:leading-[96px] cursor-pointer hover:text-primary transition-colors whitespace-nowrap"
+                className="font-display font-black tracking-[-2.4px] text-foreground cursor-pointer hover:text-primary transition-colors whitespace-nowrap"
                 onClick={handleTimeClick}
                 title="Click to edit time"
                 data-testid="text-hero-time"
               >
-                {timeString}
+                <span className="text-[60px] leading-[60px] md:text-[96px] md:leading-[96px]">{timeString}</span>
+                {!use24Hour && <span className="text-[36px] leading-[60px] md:text-[48px] md:leading-[96px]">{` ${amPm}`}</span>}
               </p>
             )}
           </div>
@@ -381,12 +382,13 @@ export function DigitalClock({
             {!isEditing && (
               <div className="flex items-start gap-2 pt-[5px] sm:hidden shrink-0">
                 <p
-                  className={`font-display text-2xl font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
+                  className={`font-display font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
                   onClick={handleTimeClick}
                   title="Click to edit time"
                   data-no-drag
                 >
-                  {timeString}
+                  <span className="text-2xl">{timeString}</span>
+                  {!use24Hour && <span className="text-[16px]">{` ${amPm}`}</span>}
                 </p>
               </div>
             )}
@@ -415,22 +417,22 @@ export function DigitalClock({
             <div className="hidden sm:block">
               <div className="flex items-center gap-2">
                 <p
-                  className={`font-display text-[36px] font-black leading-7 tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
+                  className={`font-display font-black tracking-tight text-foreground cursor-pointer transition-colors ${isDragActive ? "" : "[@media(hover:hover)]:hover:text-primary"}`}
                   onClick={handleTimeClick}
                   title="Click to edit time"
                   data-no-drag
                 >
-                  {timeString}
+                  <span className="text-[36px] leading-7">{timeString}</span>
+                  {!use24Hour && <span className="text-[24px] leading-7">{` ${amPm}`}</span>}
                 </p>
               </div>
-              <p className={`mt-[15px] text-xs text-muted-foreground flex items-center ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
-                {relativeOffset !== undefined && (
-                  <span>{formatRelativeOffset(relativeOffset)}</span>
-                )}
+              <p className={`mt-[10px] text-xs text-muted-foreground flex items-center ${(relativeOffset !== undefined || dayIndicator) ? "gap-[6px]" : "gap-[10px]"}`}>
                 <span>{timezone}</span>
-                {dayIndicator && (
-                  <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px]">
-                    {dayIndicator === "next" ? "Next Day" : "Prev Day"}
+                {(relativeOffset !== undefined || dayIndicator) && (
+                  <span className="inline-flex items-center justify-center px-[5px] gap-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px] whitespace-nowrap shrink-0">
+                    {relativeOffset !== undefined && <span className="tracking-[0.1em]">{formatRelativeOffset(relativeOffset)}</span>}
+                    {relativeOffset !== undefined && dayIndicator && <span className="bg-[#6b7280] self-stretch w-px shrink-0" />}
+                    {dayIndicator && <span>{dayIndicator === "next" ? "Next Day" : "Prev Day"}</span>}
                   </span>
                 )}
                 {!isCustomMode && weather && (
@@ -465,14 +467,13 @@ export function DigitalClock({
 
           {/* Mobile: zone + temp below city name */}
           {!isEditing && (
-            <p className={`text-xs text-muted-foreground sm:hidden flex items-center flex-wrap ${dayIndicator ? "gap-[6px]" : "gap-[10px]"}`}>
-              {relativeOffset !== undefined && (
-                <span>{formatRelativeOffset(relativeOffset)}</span>
-              )}
+            <p className={`text-xs text-muted-foreground sm:hidden flex items-center flex-wrap ${(relativeOffset !== undefined || dayIndicator) ? "gap-[6px]" : "gap-[10px]"}`}>
               <span>{timezone}</span>
-              {dayIndicator && (
-                <span className="inline-flex items-center justify-center px-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px] whitespace-nowrap shrink-0">
-                  {dayIndicator === "next" ? "Next Day" : "Prev Day"}
+              {(relativeOffset !== undefined || dayIndicator) && (
+                <span className="inline-flex items-center justify-center px-[5px] gap-[5px] border border-[#6b7280] rounded-[3px] text-[7px] font-bold uppercase text-[#6b7280] leading-[15px] whitespace-nowrap shrink-0">
+                  {relativeOffset !== undefined && <span className="tracking-[0.1em]">{formatRelativeOffset(relativeOffset)}</span>}
+                  {relativeOffset !== undefined && dayIndicator && <span className="bg-[#6b7280] self-stretch w-px shrink-0" />}
+                  {dayIndicator && <span>{dayIndicator === "next" ? "Next Day" : "Prev Day"}</span>}
                 </span>
               )}
               {!isCustomMode && weather && (
