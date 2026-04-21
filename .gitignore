@@ -7,3 +7,19 @@ vite.config.ts.*
 .env
 .env.local
 docs/HANDOFF.md
+
+# iCloud conflict-copy artifacts
+* 2.md
+* 2.ts
+* 2.sql
+* 2/
+
+# Local-only working directories + Wrangler state
+.agents/
+chat/
+design/
+api/.wrangler/
+api/api
+
+# Change-request specs authored per-session (kept locally, not in repo)
+docs/*-happyhour-changes-*.md
