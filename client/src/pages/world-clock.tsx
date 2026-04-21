@@ -11,7 +11,9 @@ import { HappyhourLogo } from "@/components/icons/happyhour-logo";
 const SCROLL_RANGE = 120; // px of scroll over which the shrink fully plays out
 const PY_START = 32;      // py-8 = 2rem = 32px
 const PY_END = 12;        // py-3 = 0.75rem = 12px
-const FS_START = 48;      // text-5xl = 3rem = 48px
+const FS_START_DESKTOP = 48; // text-5xl = 3rem = 48px
+const FS_START_MOBILE = 36;  // Figma mobile (6:2) — wordmark 36px so it doesn't wrap next to the drawer toggle
+const MOBILE_BREAKPOINT = 640; // Tailwind sm:
 const FS_END = 30;        // text-3xl = 1.875rem = 30px
 
 const USE_24H_KEY = "world-happyhour-24h";
@@ -33,7 +35,8 @@ export default function WorldClock() {
     return localStorage.getItem(SHOW_REL_TIME_KEY) === "true";
   });
   const [selectedZones, setSelectedZones] = useState<string[]>(initZonesFromStorage);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const logoVariant = resolvedTheme === "happy" ? "happy" : "default";
   const [sidebarTop, setSidebarTop] = useState(28);
   const headerRef = useRef<HTMLElement>(null);
   const h1Ref = useRef<HTMLHeadingElement>(null);
@@ -48,7 +51,9 @@ export default function WorldClock() {
         headerRef.current.style.paddingBottom = `${pyBottom}px`;
       }
       if (h1Ref.current) {
-        const fs = FS_START + (FS_END - FS_START) * ratio;
+        const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
+        const fsStart = isMobile ? FS_START_MOBILE : FS_START_DESKTOP;
+        const fs = fsStart + (FS_END - fsStart) * ratio;
         h1Ref.current.style.fontSize = `${fs}px`;
         h1Ref.current.style.lineHeight = `${fs}px`;
       }
@@ -60,8 +65,12 @@ export default function WorldClock() {
     }
 
     window.addEventListener("scroll", updateHeader, { passive: true });
+    window.addEventListener("resize", updateHeader);
     updateHeader(); // set initial position
-    return () => window.removeEventListener("scroll", updateHeader);
+    return () => {
+      window.removeEventListener("scroll", updateHeader);
+      window.removeEventListener("resize", updateHeader);
+    };
   }, []);
 
   // Persist settings
@@ -130,7 +139,7 @@ export default function WorldClock() {
             className="font-display font-black tracking-tight text-foreground text-5xl flex items-center gap-[0.3em]"
             data-testid="text-app-title"
           >
-            <HappyhourLogo className="w-[0.95em] h-[0.95em] shrink-0" />
+            <HappyhourLogo className="w-[0.95em] h-[0.95em] shrink-0" variant={logoVariant} />
             <span>Happyhour</span>
           </h1>
           <button

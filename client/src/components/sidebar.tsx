@@ -76,7 +76,7 @@ function AuthHeader({ showLogout }: { showLogout?: boolean }) {
           <p className="font-display text-[14px] font-black leading-[22px] tracking-[-0.43px] text-[#efefef]">
             Welcome back,
           </p>
-          <p className="font-display text-[29px] font-black leading-[32px] tracking-[-0.43px] text-[#efefef]">
+          <p className="font-display text-[29px] font-black leading-[32px] tracking-[-0.43px] text-[#FFD900]">
             {firstName}
           </p>
           {email && (
@@ -211,6 +211,13 @@ export function Sidebar({
     }
   }
 
+  function getThemeLabel() {
+    if (theme === "system") return "System";
+    if (theme === "light") return "Light";
+    if (theme === "dark") return "Dark";
+    return "Happy";
+  }
+
   function getThemeIcon() {
     if (theme === "system") {
       const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
@@ -221,13 +228,6 @@ export function Sidebar({
     if (theme === "light") return <Sun className="h-[24px] w-[24px]" />;
     if (theme === "dark") return <Moon className="h-[24px] w-[24px]" />;
     return <HappyhourLogo className="h-[24px] w-[24px]" />;
-  }
-
-  function getThemeLabel() {
-    if (theme === "system") return "System";
-    if (theme === "light") return "Light";
-    if (theme === "dark") return "Dark";
-    return "Happy";
   }
 
   return (

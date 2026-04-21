@@ -196,6 +196,19 @@
   }
 }
 
+/* Happy Mode temperature readability — the default Tailwind yellow/orange/green
+   lose contrast against the #ffd900 background, so we darken them. Only affects
+   temperature badges; other palette uses remain the light/dark-mode values. */
+.happy .text-yellow-500 {
+  color: #8b5a00;
+}
+.happy .text-orange-500 {
+  color: #b45309;
+}
+.happy .text-green-500 {
+  color: #166534;
+}
+
 /* Remove blue highlight that appears when dragging clock tiles */
 [data-testid^="draggable-zone-"] {
   -webkit-tap-highlight-color: transparent;

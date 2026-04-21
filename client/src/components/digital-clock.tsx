@@ -112,7 +112,7 @@ function CitySelector({
           <ChevronsUpDown className="h-3 w-3 opacity-50" />
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-[280px] p-0 z-[60]" align="start" collisionPadding={20}>
+      <PopoverContent className="w-[280px] p-0 z-[60] dark:border-[#333333]" align="start" collisionPadding={20}>
         <Command shouldFilter={false}>
           <CommandInput
             placeholder="Search cities..."
