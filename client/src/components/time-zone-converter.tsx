@@ -23,7 +23,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { getAllCities, getCityByKey, searchCities, getTimeInCityZone, formatCityDisplay, formatCityDetail, loadCities, areCitiesLoaded } from "@/lib/city-lookup";
+import { getAllCities, getCityByKey, searchCities, getTimeInCityZone, formatCityDisplay, formatCityDetail, loadCities, loadTopCities, areCitiesLoaded, areSearchCitiesReady, type TimezoneOption } from "@/lib/city-lookup";
+import { cacheTileMetadata, getCityOrCachedTile } from "@/lib/tile-cache";
 import { resolveLocalCity } from "@/lib/closest-city";
 
 // Track recent touch events so we can suppress synthetic mouse events on mobile.
@@ -141,7 +142,7 @@ function SortableClockItem({
     opacity: isDragging ? 0.5 : 1,
   };
 
-  const city = getCityByKey(zoneKey);
+  const city = getCityOrCachedTile(zoneKey);
 
   return (
     <div
@@ -277,9 +278,9 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
 
   const [citiesLoaded, setCitiesLoaded] = useState(areCitiesLoaded());
 
+  // Three-tier load: top (fast, inline bundle) → cache fallback → full (lazy).
   useEffect(() => {
-    loadCities().then(() => {
-      setCitiesLoaded(true);
+    loadTopCities().then(() => {
       const tzFallback = detectLocalCity();
       setHeroZone(tzFallback);
       // Upgrade the hero clock to the geographically-closest city once geolocation resolves.
@@ -288,6 +289,27 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
         setHeroZone((current) => (current === tzFallback ? key : current));
       });
     });
+
+    // Kick off full-dataset load during browser idle time so the Add Time Zone
+    // dropdown has every city ready before most users think to open it.
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      cancelIdleCallback?: (handle: number) => void;
+    };
+    let idleHandle: number | undefined;
+    let timeoutHandle: number | undefined;
+    const startFullLoad = () => {
+      loadCities().then(() => setCitiesLoaded(true));
+    };
+    if (w.requestIdleCallback) {
+      idleHandle = w.requestIdleCallback(startFullLoad, { timeout: 3000 });
+    } else {
+      timeoutHandle = window.setTimeout(startFullLoad, 1500);
+    }
+    return () => {
+      if (idleHandle !== undefined && w.cancelIdleCallback) w.cancelIdleCallback(idleHandle);
+      if (timeoutHandle !== undefined) window.clearTimeout(timeoutHandle);
+    };
   }, []);
 
   // Sort zones east-to-west when toggled on; restore original order when toggled off
@@ -297,8 +319,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
       onZonesChange((prev) => {
         preSortOrderRef.current = [...prev];
         const sorted = [...prev].sort((a, b) => {
-          const cityA = getCityByKey(a);
-          const cityB = getCityByKey(b);
+          const cityA = getCityOrCachedTile(a);
+          const cityB = getCityOrCachedTile(b);
           return (cityB?.offset ?? 0) - (cityA?.offset ?? 0);
         });
         if (sorted.every((z, i) => z === prev[i])) return prev;
@@ -392,6 +414,24 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
   const [addZoneSearchQuery, setAddZoneSearchQuery] = useState("");
   const addZoneRef = useRef<HTMLDivElement>(null);
 
+  // Opening the dropdown nudges the full-dataset load if idle didn't fire yet.
+  useEffect(() => {
+    if (addZoneOpen) loadCities().then(() => setCitiesLoaded(true));
+  }, [addZoneOpen]);
+
+  // Keep the tile-metadata cache warm so returning users render tiles on first paint.
+  useEffect(() => {
+    if (!areSearchCitiesReady()) return;
+    const cities: TimezoneOption[] = [];
+    for (const key of selectedZones) {
+      const c = getCityByKey(key);
+      if (c) cities.push(c);
+    }
+    const hero = getCityByKey(heroZone);
+    if (hero) cities.push(hero);
+    if (cities.length > 0) cacheTileMetadata(cities);
+  }, [selectedZones, heroZone, citiesLoaded]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!addZoneOpen) return;
@@ -463,8 +503,8 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
     return currentTime || new Date();
   }
 
-  if (!citiesLoaded || (!currentTime && !isCustomMode)) {
-    const heroCity = getCityByKey(heroZone);
+  if (!areSearchCitiesReady() || (!currentTime && !isCustomMode)) {
+    const heroCity = getCityOrCachedTile(heroZone);
     return (
       <div className="space-y-16">
         <section>
@@ -483,7 +523,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 sm:gap-8">
             {selectedZones.map((zoneKey) => {
-              const city = getCityByKey(zoneKey);
+              const city = getCityOrCachedTile(zoneKey);
               return (
                 <div key={zoneKey}>
                   <p className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
@@ -503,10 +543,10 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
   }
 
   const baseTime = getBaseTime();
-  const heroCity = getCityByKey(heroZone);
+  const heroCity = getCityOrCachedTile(heroZone);
   const heroTime = heroCity ? getTimeInCityZone(baseTime, heroCity.offset) : baseTime;
   const heroOffset = heroCity?.offset ?? 0;
-  const activeCity = activeId ? getCityByKey(activeId) : null;
+  const activeCity = activeId ? getCityOrCachedTile(activeId) : null;
 
   return (
     <div className="space-y-16">
@@ -542,7 +582,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
             </button>
           </div>
           {addZoneOpen && (
-            <div className="absolute left-0 right-0 z-50 rounded-[8px] border border-[#e5e7eb] bg-white dark:bg-background shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-clip">
+            <div className="absolute left-0 right-0 z-50 rounded-[8px] border border-[#e5e7eb] dark:border-[#6C6C6C] bg-white dark:bg-background shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] overflow-clip">
               <Command shouldFilter={false}>
                 <CommandInput
                   placeholder="Search cities..."

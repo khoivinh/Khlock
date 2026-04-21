@@ -51,12 +51,21 @@ export function formatCityDetail(city: TimezoneOption): string {
   return `${city.country} (${city.gmtLabel})`;
 }
 
-// --- Module-level mutable state, populated by loadCities() ---
+// --- Module state ---
 
-let allCities: TimezoneOption[] = [];
-let cityByKey = new Map<string, TimezoneOption>();
-let initialized = false;
-let loadPromise: Promise<void> | null = null;
+interface LookupState {
+  all: TimezoneOption[]; // sorted east-to-west
+  byKey: Map<string, TimezoneOption>;
+}
+
+let topState: LookupState | null = null;
+let fullState: LookupState | null = null;
+let topPromise: Promise<void> | null = null;
+let fullPromise: Promise<void> | null = null;
+
+function currentState(): LookupState | null {
+  return fullState || topState;
+}
 
 // --- Internal helpers ---
 
@@ -104,7 +113,7 @@ function normalizeForKey(ascii: string): string {
   return baseName.charAt(0).toLowerCase() + baseName.slice(1);
 }
 
-function buildCityData(raw: { c: string[]; t: string[]; p: string[]; d: unknown[][] }) {
+function buildLookup(raw: { c: string[]; t: string[]; p: string[]; d: unknown[][] }): LookupState {
   const cityMapping: RawCity[] = raw.d.map((r) => ({
     city: r[0] as string,
     city_ascii: r[1] as string,
@@ -129,7 +138,6 @@ function buildCityData(raw: { c: string[]; t: string[]; p: string[]; d: unknown[
       const suffix = normalizeForKey(city.state_ansi || city.province);
       key = `${baseKey}_${suffix}`;
     }
-    // Final fallback: append timezone fragment for truly ambiguous cases
     if (usedKeys.has(key)) {
       const tzSuffix = city.timezone.split("/").pop()!.replace(/[^a-zA-Z]/g, "");
       key = `${baseKey}_${tzSuffix}`;
@@ -152,43 +160,66 @@ function buildCityData(raw: { c: string[]; t: string[]; p: string[]; d: unknown[
     };
   });
 
-  return options.sort((a, b) => b.offset - a.offset);
+  const all = options.sort((a, b) => b.offset - a.offset);
+  const byKey = new Map<string, TimezoneOption>();
+  all.forEach((c) => byKey.set(c.key, c));
+  return { all, byKey };
 }
 
 // --- Public API ---
 
-/** Load and initialize city data. Safe to call multiple times — subsequent calls return the same promise. */
-export function loadCities(): Promise<void> {
-  if (initialized) return Promise.resolve();
-  if (loadPromise) return loadPromise;
+/** Load the lightweight top-cities bundle. Statically imported so it lands
+ *  in the initial JS payload (≈38 KB) — first search is responsive without
+ *  waiting on cities.json. */
+export function loadTopCities(): Promise<void> {
+  if (topState) return Promise.resolve();
+  if (topPromise) return topPromise;
 
-  loadPromise = import("@/data/cities.json").then((module) => {
+  topPromise = import("@/data/cities-top.json").then((module) => {
     const raw = module.default as { c: string[]; t: string[]; p: string[]; d: unknown[][] };
-    allCities = buildCityData(raw);
-    cityByKey = new Map<string, TimezoneOption>();
-    allCities.forEach((city) => cityByKey.set(city.key, city));
-    initialized = true;
+    topState = buildLookup(raw);
   });
 
-  return loadPromise;
+  return topPromise;
 }
 
-/** True once loadCities() has completed. */
+/** Load the full cities dataset (≈2 MB, ≈30 k cities). Lazy — only call
+ *  when the user opens the Add Time Zone dropdown or when idle time allows. */
+export function loadCities(): Promise<void> {
+  if (fullState) return Promise.resolve();
+  if (fullPromise) return fullPromise;
+
+  fullPromise = import("@/data/cities.json").then((module) => {
+    const raw = module.default as { c: string[]; t: string[]; p: string[]; d: unknown[][] };
+    fullState = buildLookup(raw);
+  });
+
+  return fullPromise;
+}
+
+/** True once the full dataset has resolved. */
 export function areCitiesLoaded(): boolean {
-  return initialized;
+  return fullState !== null;
 }
 
-/** All cities sorted by offset (east to west). Empty until loadCities() resolves. */
+/** True once either tier is ready — enough to render search results. */
+export function areSearchCitiesReady(): boolean {
+  return currentState() !== null;
+}
+
+/** All cities (prefers full tier, falls back to top). Empty until a tier resolves. */
 export function getAllCities(): TimezoneOption[] {
-  return allCities;
+  return currentState()?.all ?? [];
 }
 
 export function getCityByKey(key: string): TimezoneOption | undefined {
-  return cityByKey.get(key);
+  return currentState()?.byKey.get(key);
 }
 
 export function searchCities(query: string, limit = 50): TimezoneOption[] {
-  const cities = allCities;
+  const state = currentState();
+  if (!state) return [];
+  const cities = state.all;
   const q = query.toLowerCase().trim();
   if (!q) {
     return cities.slice(0, limit);

@@ -6,15 +6,16 @@ import { useCloudSync } from "@/hooks/use-cloud-sync";
 import { useTheme } from "@/lib/theme-provider";
 import { initZonesFromStorage } from "@/components/time-zone-converter";
 import { HappyhourLogo } from "@/components/icons/happyhour-logo";
+import { HappyhourWordmark } from "@/components/icons/happyhour-wordmark";
 
 // Header animation constants
 const SCROLL_RANGE = 120; // px of scroll over which the shrink fully plays out
 const PY_START = 32;      // py-8 = 2rem = 32px
 const PY_END = 12;        // py-3 = 0.75rem = 12px
-const FS_START_DESKTOP = 48; // text-5xl = 3rem = 48px
-const FS_START_MOBILE = 36;  // Figma mobile (6:2) — wordmark 36px so it doesn't wrap next to the drawer toggle
-const MOBILE_BREAKPOINT = 640; // Tailwind sm:
-const FS_END = 30;        // text-3xl = 1.875rem = 30px
+const LOGO_START = 38;    // Figma node 182:1510
+const LOGO_END = 25;
+const WORDMARK_H_START = 43; // Figma node 211:2310 desktop (43.392 rounded)
+const WORDMARK_H_END = 28;
 
 const USE_24H_KEY = "world-happyhour-24h";
 const SORT_ETW_KEY = "world-happyhour-sort-etw";
@@ -35,27 +36,32 @@ export default function WorldClock() {
     return localStorage.getItem(SHOW_REL_TIME_KEY) === "true";
   });
   const [selectedZones, setSelectedZones] = useState<string[]>(initZonesFromStorage);
-  const { theme, setTheme, resolvedTheme } = useTheme();
-  const logoVariant = resolvedTheme === "happy" ? "happy" : "default";
+  const { theme, setTheme } = useTheme();
   const [sidebarTop, setSidebarTop] = useState(28);
   const headerRef = useRef<HTMLElement>(null);
-  const h1Ref = useRef<HTMLHeadingElement>(null);
+  const logoRef = useRef<SVGSVGElement>(null);
+  const wordmarkRef = useRef<SVGSVGElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
 
   // Scroll-driven header shrink + sidebar top tracking
   useEffect(() => {
     function updateHeader() {
       const ratio = Math.min(1, Math.max(0, window.scrollY / SCROLL_RANGE));
+      // Shrink logo + wordmark on narrow viewports so the header fits on iPhone SE / small phones.
+      // 0.73 matches the Figma "Mobile Logged In" variant ratio (31.68 / 43.392).
+      const mobileScale = window.innerWidth < 500 ? 0.73 : 1;
       if (headerRef.current) {
         const pyBottom = PY_START + (PY_END - PY_START) * ratio;
         headerRef.current.style.paddingBottom = `${pyBottom}px`;
       }
-      if (h1Ref.current) {
-        const isMobile = window.innerWidth < MOBILE_BREAKPOINT;
-        const fsStart = isMobile ? FS_START_MOBILE : FS_START_DESKTOP;
-        const fs = fsStart + (FS_END - fsStart) * ratio;
-        h1Ref.current.style.fontSize = `${fs}px`;
-        h1Ref.current.style.lineHeight = `${fs}px`;
+      if (logoRef.current) {
+        const size = (LOGO_START + (LOGO_END - LOGO_START) * ratio) * mobileScale;
+        logoRef.current.style.width = `${size}px`;
+        logoRef.current.style.height = `${size}px`;
+      }
+      if (wordmarkRef.current) {
+        const h = (WORDMARK_H_START + (WORDMARK_H_END - WORDMARK_H_START) * ratio) * mobileScale;
+        wordmarkRef.current.style.height = `${h}px`;
       }
       // Update sidebar top to align with the toggle button
       if (toggleRef.current) {
@@ -65,7 +71,7 @@ export default function WorldClock() {
     }
 
     window.addEventListener("scroll", updateHeader, { passive: true });
-    window.addEventListener("resize", updateHeader);
+    window.addEventListener("resize", updateHeader, { passive: true });
     updateHeader(); // set initial position
     return () => {
       window.removeEventListener("scroll", updateHeader);
@@ -135,12 +141,20 @@ export default function WorldClock() {
       >
         <div className="mx-auto max-w-4xl flex flex-row items-start justify-between gap-4 pl-[10px] pr-[10px]">
           <h1
-            ref={h1Ref}
-            className="font-display font-black tracking-tight text-foreground text-5xl flex items-center gap-[0.3em]"
+            className="text-foreground flex items-center gap-[10px] min-w-0"
             data-testid="text-app-title"
           >
-            <HappyhourLogo className="w-[0.95em] h-[0.95em] shrink-0" variant={logoVariant} />
-            <span>Happyhour</span>
+            <HappyhourLogo
+              ref={logoRef}
+              className="shrink-0"
+              style={{ width: `${LOGO_START}px`, height: `${LOGO_START}px` }}
+            />
+            <HappyhourWordmark
+              ref={wordmarkRef}
+              className="shrink-0"
+              style={{ height: `${WORDMARK_H_START}px`, width: "auto" }}
+            />
+            <span className="sr-only">Happyhour</span>
           </h1>
           <button
             ref={toggleRef}

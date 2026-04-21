@@ -5,7 +5,7 @@ import { useTheme } from "@/lib/theme-provider";
 import type { SyncStatus } from "@/hooks/use-cloud-sync";
 import { DrawerOpenIcon } from "@/components/icons/drawer-open";
 import { DrawerClosedIcon } from "@/components/icons/drawer-closed";
-import { HappyhourLogo } from "@/components/icons/happyhour-logo";
+import { HappyModeIcon } from "@/components/icons/happy-mode-icon";
 
 const isClerkConfigured = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -227,7 +227,7 @@ export function Sidebar({
     }
     if (theme === "light") return <Sun className="h-[24px] w-[24px]" />;
     if (theme === "dark") return <Moon className="h-[24px] w-[24px]" />;
-    return <HappyhourLogo className="h-[24px] w-[24px]" />;
+    return <HappyModeIcon className="h-[24px] w-[24px]" />;
   }
 
   return (
@@ -260,10 +260,11 @@ export function Sidebar({
         }}
       >
         <div
-          className={`flex flex-col gap-[53px] h-full pl-[20px] pr-[20px] pt-[18px] pb-[28px] transition-opacity duration-200 ${
+          className={`flex flex-col h-full pl-[20px] pr-[20px] pt-[18px] pb-[28px] transition-opacity duration-200 ${
             open ? "opacity-100 delay-150" : "opacity-0"
           }`}
         >
+          <div className="flex flex-col gap-[53px]">
           {/* Header */}
           <div className="flex items-start gap-[23px]">
             <div className="flex-1 min-w-0">
@@ -325,6 +326,13 @@ export function Sidebar({
             {/* Logout (only shown when signed in) */}
             {isClerkConfigured && <LogoutMenuItem />}
           </div>
+          </div>
+
+          {/* Footer pinned to bottom */}
+          <p className="mt-auto text-[12px] leading-[22px] tracking-[-0.43px] text-white capitalize">
+            <span className="font-medium">©2026 </span>
+            <span className="font-bold">Design Dept Partners LLC</span>
+          </p>
         </div>
       </div>
     </>
