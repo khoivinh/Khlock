@@ -3,9 +3,13 @@ import { forwardRef, type CSSProperties } from "react";
 export type HappyhourLogoVariant = "default" | "happy";
 
 /** Happyhour brand mark — filled smiley with a checkmark-inspired eye sweep.
+ *  Geometry reproduces Figma node 182:1510 (`Light and Dark Mode`) / 214:2649 (`Happy Mode`).
+ *  The circle fills the viewBox so it reaches its Figma visual size at a given `h`/`w`;
+ *  the check + smile paths are embedded via transforms matching the Figma absolute-inset layout.
+ *
  *  Circle fill varies per theme: `default` uses brand yellow (#FFCD05) for light + dark;
- *  `happy` uses white (#FFFFFF) so the mark stays legible against the yellow page background.
- *  Face paths (check + smile) stay black in all variants. Matches Figma node 182:1510 / 214:2649. */
+ *  `happy` uses white (#FFFFFF) so the mark stays legible against the #FFD900 page background.
+ *  Face paths (check + smile) stay black in all variants. */
 export const HappyhourLogo = forwardRef<
   SVGSVGElement,
   { className?: string; style?: CSSProperties; variant?: HappyhourLogoVariant }
@@ -15,16 +19,27 @@ export const HappyhourLogo = forwardRef<
     <svg
       ref={ref}
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 512 512"
-      width="512"
-      height="512"
+      viewBox="0 0 38 38"
       className={className}
       style={style}
       aria-hidden="true"
     >
-      <circle cx="256" cy="256" r="161.08" fill={circleFill} />
-      <path d="M255.624 267.165L197.238 221.898C193.184 218.742 192.442 212.925 195.598 208.872C198.754 204.818 204.571 204.076 208.624 207.232L254.077 242.474L324.066 172.485C327.686 168.865 333.565 168.865 337.185 172.485C340.805 176.105 340.805 181.984 337.185 185.604L255.624 267.165Z" fill="#000000" />
-      <path d="M254.85 355.626C207.85 355.626 166.45 322.333 156.395 276.478C155.126 270.63 158.808 264.875 164.656 263.576C170.504 262.307 176.259 265.989 177.558 271.837C185.448 307.822 217.968 333.967 254.85 333.967C291.732 333.967 324.251 307.853 332.141 271.837C333.441 265.989 339.165 262.307 345.044 263.576C350.892 264.875 354.574 270.63 353.305 276.478C343.249 322.333 301.85 355.626 254.85 355.626Z" fill="#000000" />
+      {/* Circle — Figma inset 1.34%, so offset 0.509 with diameter 36.98 */}
+      <circle cx="19" cy="19" r="18.4926" fill={circleFill} />
+      {/* Checkmark eye — Figma inset [24.1% 24.5% 46.48% 31.31%] → translate(11.898, 9.158), intrinsic 16.7911 × 11.1814 */}
+      <g transform="translate(11.898 9.158)">
+        <path
+          d="M7.11589 11.1814L0.41294 5.98453C-0.0523949 5.6222 -0.137647 4.95439 0.224675 4.48906C0.586997 4.02373 1.25481 3.93847 1.72014 4.3008L6.93828 8.34672L14.9733 0.311703C15.3889 -0.103901 16.0638 -0.103901 16.4794 0.311703C16.895 0.727308 16.895 1.40222 16.4794 1.81783L7.11589 11.1814Z"
+          fill="#000000"
+        />
+      </g>
+      {/* Smile — Figma inset [52.36% 20.38% 19.75% 19.98%] → translate(7.592, 19.897), intrinsic 22.6634 × 10.5964 */}
+      <g transform="translate(7.592 19.897)">
+        <path
+          d="M11.3317 10.5964C5.93597 10.5964 1.18316 6.77428 0.0287017 1.50996C-0.116937 0.838597 0.305771 0.177893 0.977131 0.0287017C1.64849 -0.116937 2.3092 0.305771 2.45839 0.977131C3.36419 5.10831 7.09753 8.1099 11.3317 8.1099C15.5659 8.1099 19.2992 5.11186 20.205 0.977131C20.3542 0.305771 21.0114 -0.116937 21.6863 0.0287017C22.3577 0.177893 22.7804 0.838597 22.6347 1.50996C21.4803 6.77428 16.7275 10.5964 11.3317 10.5964Z"
+          fill="#000000"
+        />
+      </g>
     </svg>
   );
 });
