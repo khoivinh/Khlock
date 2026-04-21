@@ -36,7 +36,10 @@ export default function WorldClock() {
     return localStorage.getItem(SHOW_REL_TIME_KEY) === "true";
   });
   const [selectedZones, setSelectedZones] = useState<string[]>(initZonesFromStorage);
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const logoVariant = resolvedTheme === "happy" ? "happy" : "default";
+  // Figma spec per theme: light/happy wordmark = #333333, dark = white.
+  const wordmarkColor = resolvedTheme === "dark" ? "#FFFFFF" : "#333333";
   const [sidebarTop, setSidebarTop] = useState(28);
   const headerRef = useRef<HTMLElement>(null);
   const logoRef = useRef<SVGSVGElement>(null);
@@ -139,21 +142,26 @@ export default function WorldClock() {
         ref={headerRef}
         className="sticky top-0 z-50 bg-background border-b border-border px-6 md:px-12 lg:px-24 py-8"
       >
-        <div className="mx-auto max-w-4xl flex flex-row items-start justify-between gap-4 pl-[10px] pr-[10px]">
+        <div className="mx-auto max-w-4xl flex flex-row items-center justify-between gap-4 pl-[10px] pr-[20px]">
           <h1
-            className="text-foreground flex items-center gap-[10px] min-w-0"
+            className="flex items-center gap-[10px] min-w-0"
             data-testid="text-app-title"
           >
             <HappyhourLogo
               ref={logoRef}
+              variant={logoVariant}
               className="shrink-0"
               style={{ width: `${LOGO_START}px`, height: `${LOGO_START}px` }}
             />
-            <HappyhourWordmark
-              ref={wordmarkRef}
-              className="shrink-0"
-              style={{ height: `${WORDMARK_H_START}px`, width: "auto" }}
-            />
+            {/* Nameplate: pt-[9px] matches Figma so the logo's vertical center aligns with the wordmark's
+                visual center (not the bounding-box center — the wordmark glyphs sit low in their viewBox). */}
+            <div className="flex flex-col items-start pt-[9px] shrink-0">
+              <HappyhourWordmark
+                ref={wordmarkRef}
+                className="shrink-0"
+                style={{ height: `${WORDMARK_H_START}px`, width: "auto", color: wordmarkColor }}
+              />
+            </div>
             <span className="sr-only">Happyhour</span>
           </h1>
           <button
