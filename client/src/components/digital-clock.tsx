@@ -398,15 +398,21 @@ export function DigitalClock({
   // Grid layout (only layout now)
   return (
     <>
+    {/* border-transparent on the base reserves 1px of border space in every
+        state so that transitioning to an active state (focus/drag) — which
+        swaps in a colored border — doesn't grow the tile or nudge its
+        contents. Active states switch the border color only; box dimensions
+        stay identical. transition-colors (added below) gives a smooth color
+        fade alongside the background-color transition. */}
     <div
-      className={`relative rounded-[15px] px-2.5 pt-[15px] pb-5
+      className={`relative rounded-[15px] px-2.5 pt-[15px] pb-5 border border-transparent
       ${isRemoving ? "animate-out fade-out-0 zoom-out-95 [animation-duration:800ms] pointer-events-none" : ""}
-      ${isDragActive ? "transition-none" : "transition-[background-color,box-shadow] duration-300 ease-out"}
+      ${isDragActive ? "transition-none" : "transition-[background-color,border-color,box-shadow] duration-300 ease-out"}
       ${
         isBeingDragged
-          ? "bg-[#fdf19d] dark:bg-[#4a4020] border border-[#ffedbd] dark:border-[#5c4f2a] shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+          ? "bg-[#fdf19d] dark:bg-[#4a4020] border-[#ffedbd] dark:border-[#5c4f2a] shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
           : isDropdownOpen
-            ? "bg-[#fdf7ca] dark:bg-[#3d3520] border border-[#ffedbd] dark:border-[#5c4f2a]"
+            ? "bg-[#fdf7ca] dark:bg-[#3d3520] border-[#ffedbd] dark:border-[#5c4f2a]"
             : isDragActive
               ? "shadow-none bg-transparent"
               : isHighlighted
