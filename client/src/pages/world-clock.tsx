@@ -175,7 +175,7 @@ export default function WorldClock() {
           <button
             ref={toggleRef}
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+            className="shrink-0 text-[#6B7280] hover:text-[#374151] transition-colors"
             aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             data-testid="button-drawer-toggle"
           >
