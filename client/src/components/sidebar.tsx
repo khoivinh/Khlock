@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Monitor, Smartphone, Sun, Moon, Check, Loader2, CloudOff, AlertCircle } from "lucide-react";
 import { SignInButton, SignOutButton, useUser, useAuth } from "@clerk/clerk-react";
 import { useTheme } from "@/lib/theme-provider";
+import { track } from "@/lib/analytics";
 import type { SyncStatus } from "@/hooks/use-cloud-sync";
 import { DrawerOpenIcon } from "@/components/icons/drawer-open";
 import { DrawerClosedIcon } from "@/components/icons/drawer-closed";
@@ -200,15 +201,13 @@ export function Sidebar({
   }, [open, onClose]);
 
   function cycleTheme() {
-    if (theme === "system") {
-      setTheme("light");
-    } else if (theme === "light") {
-      setTheme("dark");
-    } else if (theme === "dark") {
-      setTheme("happy");
-    } else {
-      setTheme("system");
-    }
+    const next =
+      theme === "system" ? "light" :
+      theme === "light" ? "dark" :
+      theme === "dark" ? "happy" :
+      "system";
+    setTheme(next);
+    track("appearance_changed", { theme: next });
   }
 
   function getThemeLabel() {
@@ -327,19 +326,7 @@ export function Sidebar({
             {isClerkConfigured && <LogoutMenuItem />}
           </div>
           </div>
-
-          {/* Footer pinned to bottom */}
-          <p className="mt-auto text-[12px] leading-[22px] tracking-[-0.43px] text-white capitalize">
-            <span className="font-medium">©2026 </span>
-            <a
-              href="https://designdept.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-bold no-underline text-inherit hover:opacity-80 transition-opacity"
-            >
-              Design Dept Partners LLC
-            </a>
-          </p>
+          {/* Copyright moved to universal site footer (see `site-footer.tsx`, 2026-04-23). */}
         </div>
       </div>
     </>

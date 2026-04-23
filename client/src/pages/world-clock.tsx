@@ -8,6 +8,8 @@ import { initZonesFromStorage } from "@/components/time-zone-converter";
 import { HappyhourLogo } from "@/components/icons/happyhour-logo";
 import { HappyhourWordmark } from "@/components/icons/happyhour-wordmark";
 import { OfflineBanner } from "@/components/offline-banner";
+import { SiteFooter } from "@/components/site-footer";
+import { track } from "@/lib/analytics";
 
 // Header animation constants
 const SCROLL_RANGE = 120; // px of scroll over which the shrink fully plays out
@@ -127,14 +129,38 @@ export default function WorldClock() {
 
     setSelectedTime(utcTime);
     setIsCustomMode(true);
+    track("custom_time_set");
   }
 
   function handleReset() {
     setIsCustomMode(false);
     setSelectedTime(null);
+    track("custom_time_reset");
   }
 
   const handleCloseSidebar = useCallback(() => setSidebarOpen(false), []);
+
+  function handleToggleSidebar() {
+    setSidebarOpen((prev) => {
+      if (!prev) track("sidebar_opened");
+      return !prev;
+    });
+  }
+
+  function handleToggle24Hour(value: boolean) {
+    setUse24Hour(value);
+    track("toggle_24h", { enabled: value });
+  }
+
+  function handleToggleSortEastToWest(value: boolean) {
+    setSortEastToWest(value);
+    track("toggle_east_west_sort", { enabled: value });
+  }
+
+  function handleToggleShowRelativeTime(value: boolean) {
+    setShowRelativeTime(value);
+    track("toggle_relative_time", { enabled: value });
+  }
 
   return (
     <main className="min-h-screen bg-background">
@@ -174,7 +200,7 @@ export default function WorldClock() {
           </h1>
           <button
             ref={toggleRef}
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            onClick={handleToggleSidebar}
             className="shrink-0 text-[#6B7280] hover:text-[#374151] transition-colors"
             aria-label={sidebarOpen ? "Close menu" : "Open menu"}
             data-testid="button-drawer-toggle"
@@ -198,11 +224,11 @@ export default function WorldClock() {
             open={sidebarOpen}
             onClose={handleCloseSidebar}
             use24Hour={use24Hour}
-            onToggle24Hour={setUse24Hour}
+            onToggle24Hour={handleToggle24Hour}
             sortEastToWest={sortEastToWest}
-            onToggleSortEastToWest={setSortEastToWest}
+            onToggleSortEastToWest={handleToggleSortEastToWest}
             showRelativeTime={showRelativeTime}
-            onToggleShowRelativeTime={setShowRelativeTime}
+            onToggleShowRelativeTime={handleToggleShowRelativeTime}
             topOffset={sidebarTop}
             syncStatus={syncStatus}
           />
@@ -225,6 +251,8 @@ export default function WorldClock() {
           />
         </div>
       </div>
+
+      <SiteFooter />
     </main>
   );
 }

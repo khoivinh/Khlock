@@ -26,6 +26,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { getAllCities, getCityByKey, searchCities, getTimeInCityZone, formatCityDisplay, formatCityDetail, loadCities, loadTopCities, areCitiesLoaded, areSearchCitiesReady, didFullCitiesFail, type TimezoneOption } from "@/lib/city-lookup";
 import { cacheTileMetadata, getCityOrCachedTile } from "@/lib/tile-cache";
 import { resolveLocalCity } from "@/lib/closest-city";
+import { track } from "@/lib/analytics";
 
 // Track recent touch events so we can suppress synthetic mouse events on mobile.
 // Browsers fire mousedown ~0-100ms after touchstart; if MouseSensor activates on
@@ -407,6 +408,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
 
     onZonesChange((prev: string[]) => [zoneKey, ...prev]);
     setNewlyAddedZone(zoneKey);
+    track("city_added", { city_key: zoneKey });
 
     setTimeout(() => {
       setNewlyAddedZone(null);
@@ -415,7 +417,11 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
 
   const handleRemoveClock = useCallback((zoneKey: string) => {
     // Last-tile guard: never allow the grid to go empty.
-    onZonesChange((prev: string[]) => (prev.length <= 1 ? prev : prev.filter((z: string) => z !== zoneKey)));
+    onZonesChange((prev: string[]) => {
+      if (prev.length <= 1) return prev;
+      track("city_removed", { city_key: zoneKey });
+      return prev.filter((z: string) => z !== zoneKey);
+    });
   }, [onZonesChange]);
 
   const [addZoneOpen, setAddZoneOpen] = useState(false);
