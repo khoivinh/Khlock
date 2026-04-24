@@ -229,22 +229,24 @@
 }
 
 /* Touch-gesture config for clock tiles.
-   `touch-action: none` on the wrapper: blocks iOS from claiming the touch
-   for native scroll. This is the Trello/Notion/Todoist pattern — the
-   draggable card never competes with scroll. The trade-off is that users
-   can't scroll the page by dragging *from inside a tile*; they scroll
-   from the header, footer, or the gaps between tiles (plus momentum
-   carries scroll through tiles once started elsewhere).
-   Why this is load-bearing: the 500 ms long-press activation lost the
-   touch to iOS scroll ~20-40% of the time when `touch-action` was auto
-   or manipulation, because iOS commits to a gesture within the first
-   frame of touchmove and won't release mid-touch (see 2026-04-23 devlog
-   for the full investigation). Do NOT relax this to `manipulation`,
-   `pan-y`, or `auto` on the tile wrapper — each breaks mobile drag. */
+   The tile wrapper no longer carries touch-action: none — previously did,
+   but it stopped users from scrolling the page by dragging from inside a
+   tile, and drag was still unreliable anyway (iOS commits touches to
+   scroll faster than dnd-kit's 500 ms long-press could activate). The
+   fix landed 2026-04-23: mobile drag is handle-only, so the wrapper can
+   allow native scroll again. See `time-zone-converter.tsx` for the
+   sensor-level change. */
 [data-testid^="draggable-zone-"] {
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
   user-select: none;
+}
+
+/* The drag handle is the only mobile drag surface. It must block native
+   gestures so its 150 ms activation wins every time. Padding is bumped
+   on touch devices inline (see digital-clock.tsx) to meet a reasonable
+   touch-target size. */
+[data-drag-handle] {
   touch-action: none;
 }
 

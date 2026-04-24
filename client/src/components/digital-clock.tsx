@@ -424,10 +424,13 @@ export function DigitalClock({
       data-testid={`clock-tile-${selectedZoneKey}`}
     >
       <div className="flex items-start gap-2" ref={isEditing ? editContainerRef : undefined}>
-        {/* Drag handle */}
+        {/* Drag handle. On touch devices this is the ONLY drag affordance
+            (tile-body long-press is disabled — see time-zone-converter.tsx),
+            so the hit area is expanded via the @media(pointer:coarse) padding
+            override. Desktop keeps its tight pt-2.5 pr-1 footprint. */}
         {isDraggable && (
           <div
-            className="flex-shrink-0 flex items-start justify-center pt-2.5 pr-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
+            className="flex-shrink-0 flex items-start justify-center pt-2.5 pr-1 [@media(pointer:coarse)]:p-2.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
             {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
             data-drag-handle
             title="Drag to reorder"

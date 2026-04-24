@@ -112,8 +112,8 @@ Revise the current UI — refine clock tile interactions, simplify the layout to
   - Width: 4px, color: `#3c83f6`, border radius: 4px, full height of tile
 - [x] Ghost tile (source position while dragging): 50% opacity
 - [x] Drag overlay (tile following cursor): 90% opacity, yellow active background (`#fdf19d`), border 1px solid `#ffedbd`, shadow `0px 1px 2px rgba(0,0,0,0.15)`
-- [x] Long-press to initiate drag on tile body (600ms delay, 5px movement tolerance); drag handle icon uses faster 150ms delay
-- [ ] **Bug:** Touch drag unreliable on left-most column — pressing/holding sometimes doesn't trigger drag, or requires unnaturally long hold
+- [x] Long-press to initiate drag on tile body (500ms delay, 5px movement tolerance) *— desktop only as of 2026-04-23; see mobile note below*; drag handle icon uses faster 150ms delay (both desktop and mobile)
+- [x] **Mobile drag policy** *(revised 2026-04-23)*: on touch devices (`(pointer: coarse)`) drag activates only from the grip-handle icon. Tile-body long-press is disabled because iOS Safari commits touches to scroll faster than dnd-kit's 500 ms long-press can take over, causing intermittent drag failures regardless of `touch-action` settings. Handle-only is the Trello/Notion/Todoist pattern. Handle touch target is padded up on mobile for accessibility (`[@media(pointer:coarse)]:p-2.5`). Desktop unchanged — `MouseSensor` covers the tile body naturally.
 - [ ] **Bug:** Drag overlay vertical spacing differs from resting tile — dragged tile should maintain identical sizing across all states
 
 ### Scope: Ellipsis Menu Replaces X Button

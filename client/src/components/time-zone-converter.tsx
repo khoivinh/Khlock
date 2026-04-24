@@ -254,6 +254,19 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
   const [activeId, setActiveId] = useState<string | null>(null);
   const preSortOrderRef = useRef<string[] | null>(null);
 
+  // Mobile drag policy (2026-04-23): on touch devices, drag only activates from
+  // the grip-handle icon. The tile-body long-press sensor is unreliable on iOS
+  // because Safari commits to a scroll gesture during the 500ms hold and won't
+  // release it mid-touch. Desktop (fine pointer) keeps both paths — the mouse
+  // sensor covers the tile body naturally.
+  const isTouchDevice = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+    []
+  );
+  const tileSensor = useSensor(TileTouchSensor, {
+    activationConstraint: { delay: 500, tolerance: 5 },
+  });
+
   const sensors = useSensors(
     useSensor(HandleTouchSensor, {
       activationConstraint: {
@@ -261,12 +274,7 @@ export function TimeZoneConverter({ isCustomMode, selectedTime, onTimeUpdate, on
         tolerance: 8,
       },
     }),
-    useSensor(TileTouchSensor, {
-      activationConstraint: {
-        delay: 500,
-        tolerance: 5,
-      },
-    }),
+    isTouchDevice ? null : tileSensor,
     useSensor(DesktopMouseSensor, {
       activationConstraint: {
         distance: 8,
