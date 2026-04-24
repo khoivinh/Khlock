@@ -423,16 +423,28 @@ export function DigitalClock({
       }`}
       data-testid={`clock-tile-${selectedZoneKey}`}
     >
+      {/* Touch-only drag-handle overlay: a 30px-wide full-height invisible
+          strip pinned to the tile's left edge. Carries data-drag-handle +
+          dragHandleListeners so HandleTouchSensor activates from anywhere
+          in this zone (matches the visible grip's position). Kept out of
+          the flex row so it doesn't consume layout width — the city-name
+          column stays at its pre-fix breathing room. Desktop doesn't need
+          this because DesktopMouseSensor drags from the whole tile. */}
+      {isDraggable && (
+        <div
+          className="absolute inset-y-0 left-0 w-[30px] hidden [@media(pointer:coarse)]:block"
+          {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
+          data-drag-handle
+          aria-hidden="true"
+        />
+      )}
       <div className="flex items-start gap-2" ref={isEditing ? editContainerRef : undefined}>
-        {/* Drag handle. On touch devices this is the ONLY drag affordance
-            (tile-body long-press is disabled — see time-zone-converter.tsx),
-            so the hit area is expanded via the @media(pointer:coarse) padding
-            override. Desktop keeps its tight pt-2.5 pr-1 footprint. */}
+        {/* Visible grip — pure visual affordance. Desktop drag is handled
+            by the tile-wrapper mouse sensor; touch drag is handled by the
+            invisible overlay above. */}
         {isDraggable && (
           <div
-            className="flex-shrink-0 flex items-start justify-center pt-2.5 pr-1 [@media(pointer:coarse)]:p-2.5 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
-            {...(dragHandleListeners as React.HTMLAttributes<HTMLDivElement>)}
-            data-drag-handle
+            className="flex-shrink-0 flex items-start justify-center pt-2.5 pr-1 text-muted-foreground/40 hover:text-muted-foreground transition-colors cursor-grab active:cursor-grabbing"
             title="Drag to reorder"
           >
             <GripVertical className="h-4 w-4" />
