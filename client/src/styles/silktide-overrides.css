@@ -90,6 +90,10 @@ html.happy #stcm-wrapper {
 
 /* ------------------------------------------------------------------
    Description text
+   Desktop (Figma 280:4647): 12px Inter Regular, line-height normal, flex-1
+     to share row width with the actions cluster.
+   Mobile (Figma 280:5123): 11px Inter Regular, line-height normal, full-width
+     above the actions row (no flex sizing — banner is column-flex on mobile).
    ------------------------------------------------------------------ */
 #stcm-wrapper #stcm-banner .stcm-consent-description,
 #stcm-wrapper #stcm-banner > p {
@@ -98,12 +102,14 @@ html.happy #stcm-wrapper {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: normal;
   color: var(--textColor);
 }
 @media (max-width: 639px) {
   #stcm-wrapper #stcm-banner .stcm-consent-description,
   #stcm-wrapper #stcm-banner > p {
+    flex: 0 0 auto;     /* reset desktop flex-grow so it doesn't stretch in column-flex */
+    width: 100%;
     font-size: 11px;
   }
 }
@@ -267,34 +273,70 @@ html.happy #stcm-wrapper {
   border-radius: 10px;
 }
 
-/* Header — title + close X */
+/* Header — h1 + close-X. Figma 296:3942 sets header gap-9 items-start. */
 #stcm-modal header {
-  margin-bottom: 15px;
+  margin-bottom: 10px;
   align-items: flex-start;
+  gap: 9px;
 }
 
 #stcm-modal h1 {
   font-family: var(--fontFamily);
   font-weight: 700;
   font-size: 17px;
-  line-height: 1.2;
+  line-height: normal;
   color: var(--textColor);
 }
 
-/* Yellow X icon top-right — override Silktide's default padding + fill */
+/* Close X — Figma 296:3871: two 3×17 #FFD900 rounded rects rotated ±45°
+   inside a 14.142×14.142 box. Hide Silktide's default 20×20 SVG and rebuild
+   the X via ::before / ::after pseudo-elements at the exact Figma geometry. */
 #stcm-modal .stcm-modal-close {
+  position: relative;
+  width: 14.142px;
+  height: 14.142px;
+  padding: 0;
+  margin: 0;
   background: transparent;
-  padding: 4px;
-  color: var(--primaryColor);
+  border: 0;
+  cursor: pointer;
+  flex-shrink: 0;
+  align-self: flex-start;
+  /* Figma's Close Affordance has pl-[40px] — left-spacer baked into the
+     header gap, so we don't add it here. */
 }
-
+#stcm-modal .stcm-modal-close:hover {
+  opacity: 0.85;
+}
 #stcm-modal .stcm-modal-close svg {
-  fill: var(--primaryColor);
+  display: none;
+}
+#stcm-modal .stcm-modal-close::before,
+#stcm-modal .stcm-modal-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 17px;
+  background: #ffd900;
+  border-radius: 2px;
+}
+#stcm-modal .stcm-modal-close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+#stcm-modal .stcm-modal-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
-/* Body — description + fieldsets */
+/* Body — description + fieldsets.
+   Figma "Top" = flex-col gap-15 items-start with pb-30:
+     [intro (h1+desc)] gap-15 [Necessary] gap-15 [Analytics] pb-30 [actions]
+   Silktide markup: header / p / section[fieldsets] / footer.
+   Map: header→intro top, p→description (header gap-10 inside intro), fieldsets gap-15. */
 #stcm-modal section {
-  margin-top: 10px;
+  margin: 0;
+  padding: 0;
 }
 
 /* Description paragraph: Figma specifies Inter Regular 14/20, full opacity. */
@@ -309,8 +351,11 @@ html.happy #stcm-wrapper {
 
 #stcm-modal fieldset {
   margin: 0 0 15px;
+  padding: 0;
 }
 
+/* 30px breathing room between the last consent type and the action row,
+   matching Figma's pb-[30px] on the Top container. */
 #stcm-modal fieldset:last-of-type {
   margin-bottom: 30px;
 }
@@ -325,9 +370,10 @@ html.happy #stcm-wrapper {
   margin: 0 0 5px;
 }
 
+/* Figma Option row: flex gap-16 items-start (NOT items-center). */
 #stcm-modal .stcm-consent-row {
   gap: 16px;
-  align-items: center;
+  align-items: flex-start;
 }
 
 #stcm-modal .stcm-consent-row p,
@@ -341,40 +387,50 @@ html.happy #stcm-wrapper {
   margin: 0;
 }
 
-/* Toggle switches — scaled to 33×18 per Figma (Silktide default 74×34). */
+/* Toggle — Figma 296:3854 uses a *stroked-pill + small circular knob*
+   (NOT a filled track). 33×18, 1.5px stroke, knob r=5 (10×10).
+   - OFF: stroke + knob both #FFFFFF, knob centered at cx=9 (left).
+   - ON:  stroke + knob both #22C55E, knob centered at cx=24 (right).
+   Source: Figma Switch Stroke SVGs at toggle nodes 101:1184 / 114:1132. */
 #stcm-modal .stcm-toggle {
   height: 18px;
   width: 33px;
+  flex-shrink: 0;
 }
 
 #stcm-modal .stcm-toggle-track {
   height: 18px;
   width: 33px;
-  background: #4a5563;
+  background: transparent;
+  border: 1.5px solid #ffffff;
   border-radius: 9999px;
+  box-sizing: border-box;
 }
 
 #stcm-modal .stcm-toggle-thumb {
-  top: 2px;
-  left: 2px;
-  height: 14px;
-  width: 14px;
+  top: 4px;       /* (18 - 10) / 2 → vertically centered */
+  left: 4px;      /* OFF: knob center at cx=9, r=5 → x = 9 - 5 = 4 */
+  height: 10px;
+  width: 10px;
   background: #ffffff;
   border-radius: 50%;
+  transition: left 150ms ease-out, background-color 150ms ease-out;
 }
 
-/* Hide OFF/ON text labels — Figma toggle is a clean pill. */
+/* Hide OFF/ON text labels — Figma toggle is a clean stroked pill. */
 #stcm-modal .stcm-toggle-off,
 #stcm-modal .stcm-toggle-on {
   display: none;
 }
 
 #stcm-modal .stcm-toggle input:checked + .stcm-toggle-track {
-  background: #22c55e;
+  background: transparent;
+  border-color: #22c55e;
 }
 
 #stcm-modal .stcm-toggle input:checked ~ .stcm-toggle-thumb {
-  left: calc(100% - 16px);
+  left: 19px;     /* ON: knob center at cx=24, r=5 → x = 24 - 5 = 19 */
+  background: #22c55e;
 }
 
 #stcm-modal .stcm-toggle:focus-within {
@@ -382,7 +438,8 @@ html.happy #stcm-wrapper {
   border-radius: 9999px;
 }
 
-/* Action buttons (Accept All / Essential Only / Save) */
+/* Action buttons (Accept All / Essential Only) — Figma button spec:
+   bg #FFD900, color #333, Inter Bold 10px uppercase, rounded-6, pad 8/12/10. */
 #stcm-wrapper #stcm-modal .stcm-button,
 #stcm-wrapper #stcm-modal .stcm-button-primary,
 #stcm-wrapper #stcm-modal .stcm-button-secondary {
@@ -396,7 +453,7 @@ html.happy #stcm-wrapper {
   font-size: 10px;
   line-height: normal;
   text-transform: uppercase;
-  letter-spacing: 0.2px;
+  letter-spacing: 0;
 }
 
 #stcm-wrapper #stcm-modal .stcm-button:hover,
@@ -404,44 +461,57 @@ html.happy #stcm-wrapper {
 #stcm-wrapper #stcm-modal .stcm-button-secondary:hover {
   background-color: var(--primaryColor);
   color: #333333;
-  opacity: 0.9;
+  filter: brightness(0.92);
 }
 
-/* Footer — Silktide attribution */
+/* Footer — Figma "Action Buttons" row:
+   [Accept all] [Essential Only] [text → Silktide-S icon] right-cluster.
+   Silktide markup: <footer>{save}{reject}{credit-link}</footer>. The
+   credit-link is pushed right via Silktide's default `footer a { margin-left: auto }`. */
 #stcm-modal footer {
   margin-top: 0;
   gap: 16px;
   align-items: center;
+  flex-direction: row;
 }
 
 #stcm-modal footer a,
 #stcm-modal footer a.stcm-credit-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: auto;
+  padding: 0;
   color: var(--primaryColor);
   font-family: var(--fontFamily);
+  font-weight: 400;
   font-size: 12px;
   line-height: normal;
+  text-align: right;
   text-decoration: none;
+}
+
+/* Silktide S icon next to the credit text — Figma 296:3887 (22.889 × 22.9).
+   Silktide's modal markup doesn't include this icon, so we inject it via
+   ::after using a mask-image so it inherits color from `background-color`. */
+#stcm-modal footer a.stcm-credit-link::after {
+  content: '';
+  display: inline-block;
+  width: 23px;
+  height: 23px;
+  background-color: var(--primaryColor);
+  -webkit-mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 25'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.1096 16.7745C13.8895 17.2055 13.3537 17.3805 12.9129 17.1653L8.28443 14.9055L2.73192 17.7651L11.1025 21.9814C11.909 22.3876 12.8725 22.3591 13.6524 21.9058L20.4345 17.9645C21.2845 17.4704 21.7797 16.5522 21.7164 15.5872L21.7088 15.4704C21.6487 14.5561 21.0962 13.7419 20.2579 13.3326L15.6793 11.0972L10.2283 13.9045L13.71 15.6043C14.1507 15.8195 14.3297 16.3434 14.1096 16.7745ZM8.2627 12.9448L13.7136 10.1375L10.2889 8.46543C9.84803 8.25021 9.66911 7.72629 9.88916 7.29524C10.1093 6.86417 10.6451 6.68921 11.0859 6.90442L15.6575 9.13647L21.2171 6.27325L12.8808 2.03496C12.0675 1.62147 11.0928 1.65154 10.3078 2.11432L3.54908 6.09869C2.70732 6.59492 2.21846 7.50845 2.28139 8.46761L2.29003 8.59923C2.35002 9.51362 2.9026 10.3278 3.7409 10.7371L8.2627 12.9448ZM6.31884 13.9458L2.94386 12.2981C1.53727 11.6113 0.610092 10.2451 0.509431 8.71094L0.500795 8.57933C0.3952 6.96993 1.21547 5.4371 2.62787 4.60447L9.38662 0.620092C10.7038 -0.156419 12.3392 -0.206861 13.7039 0.486938L23.3799 5.40639C23.4551 5.44459 23.5224 5.4918 23.5811 5.54596C23.7105 5.62499 23.8209 5.73754 23.897 5.87906C24.1266 6.30534 23.9594 6.83293 23.5234 7.05744L17.6231 10.0961L21.0549 11.7716C22.4615 12.4583 23.3887 13.8245 23.4893 15.3587L23.497 15.4755C23.6033 17.0947 22.7724 18.6354 21.346 19.4644L14.5639 23.4057C13.2554 24.1661 11.6386 24.214 10.2854 23.5324L0.621855 18.6649C0.477299 18.592 0.361696 18.4859 0.279794 18.361C0.210188 18.2968 0.150054 18.2204 0.10296 18.133C-0.126635 17.7067 0.0406445 17.1792 0.47659 16.9546L6.31884 13.9458Z'/%3E%3C/svg%3E") center/contain no-repeat;
+  mask: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 25'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M14.1096 16.7745C13.8895 17.2055 13.3537 17.3805 12.9129 17.1653L8.28443 14.9055L2.73192 17.7651L11.1025 21.9814C11.909 22.3876 12.8725 22.3591 13.6524 21.9058L20.4345 17.9645C21.2845 17.4704 21.7797 16.5522 21.7164 15.5872L21.7088 15.4704C21.6487 14.5561 21.0962 13.7419 20.2579 13.3326L15.6793 11.0972L10.2283 13.9045L13.71 15.6043C14.1507 15.8195 14.3297 16.3434 14.1096 16.7745ZM8.2627 12.9448L13.7136 10.1375L10.2889 8.46543C9.84803 8.25021 9.66911 7.72629 9.88916 7.29524C10.1093 6.86417 10.6451 6.68921 11.0859 6.90442L15.6575 9.13647L21.2171 6.27325L12.8808 2.03496C12.0675 1.62147 11.0928 1.65154 10.3078 2.11432L3.54908 6.09869C2.70732 6.59492 2.21846 7.50845 2.28139 8.46761L2.29003 8.59923C2.35002 9.51362 2.9026 10.3278 3.7409 10.7371L8.2627 12.9448ZM6.31884 13.9458L2.94386 12.2981C1.53727 11.6113 0.610092 10.2451 0.509431 8.71094L0.500795 8.57933C0.3952 6.96993 1.21547 5.4371 2.62787 4.60447L9.38662 0.620092C10.7038 -0.156419 12.3392 -0.206861 13.7039 0.486938L23.3799 5.40639C23.4551 5.44459 23.5224 5.4918 23.5811 5.54596C23.7105 5.62499 23.8209 5.73754 23.897 5.87906C24.1266 6.30534 23.9594 6.83293 23.5234 7.05744L17.6231 10.0961L21.0549 11.7716C22.4615 12.4583 23.3887 13.8245 23.4893 15.3587L23.497 15.4755C23.6033 17.0947 22.7724 18.6354 21.346 19.4644L14.5639 23.4057C13.2554 24.1661 11.6386 24.214 10.2854 23.5324L0.621855 18.6649C0.477299 18.592 0.361696 18.4859 0.279794 18.361C0.210188 18.2968 0.150054 18.2204 0.10296 18.133C-0.126635 17.7067 0.0406445 17.1792 0.47659 16.9546L6.31884 13.9458Z'/%3E%3C/svg%3E") center/contain no-repeat;
 }
 
 #stcm-modal footer a svg,
 #stcm-modal footer a.stcm-credit-link svg {
-  fill: var(--primaryColor);
+  display: none;
 }
 
-/* Responsive — tighten padding + stack the footer attribution row */
+/* Responsive — tighten padding on narrow viewports */
 @media (max-width: 480px) {
   #stcm-modal {
     padding: 24px 20px;
-  }
-
-  #stcm-modal footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  #stcm-modal footer a,
-  #stcm-modal footer a.stcm-credit-link {
-    margin-left: 0;
-    text-align: right;
   }
 }
