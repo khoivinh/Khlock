@@ -45,6 +45,10 @@
             gtag: 'analytics_storage'
           }
         ],
+        // Backdrop is needed so the preferences modal dims the page like
+        // the sidebar does. CSS in silktide-overrides.css suppresses it
+        // while only the bottom banner is showing.
+        backdrop: { show: true },
         text: {
           prompt: {
             acceptAllButtonText: 'Accept all',

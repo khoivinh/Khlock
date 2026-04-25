@@ -116,10 +116,18 @@ html.happy #stcm-wrapper {
 
 /* ------------------------------------------------------------------
    Action cluster (Accept / Essential / Preferences / Silktide logo)
+   Silktide's default .stcm-actions flips to flex-direction:column below
+   600px, which stacks the buttons vertically AND lets them stretch full-
+   width (with .stcm-button's default text-align:center), producing the
+   "centered stacked" look the Figma 280:5123 mobile design rejects.
+   Force flex-direction:row at ALL widths so the two buttons stay side-by-
+   side and left-aligned per Figma.
    ------------------------------------------------------------------ */
 #stcm-wrapper #stcm-banner .stcm-actions {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: flex-start;
   gap: 16px;
   flex-shrink: 0;
   padding: 0;
@@ -333,8 +341,11 @@ html.happy #stcm-wrapper {
    Figma "Top" = flex-col gap-15 items-start with pb-30:
      [intro (h1+desc)] gap-15 [Necessary] gap-15 [Analytics] pb-30 [actions]
    Silktide markup: header / p / section[fieldsets] / footer.
-   Map: header→intro top, p→description (header gap-10 inside intro), fieldsets gap-15. */
+   Map: header→intro top, p→description (header gap-10 inside intro), fieldsets gap-15.
+   Override Silktide's default `flex: 1` on section so it doesn't grow in the
+   modal's column-flex container and compress visual gaps. */
 #stcm-modal section {
+  flex: 0 0 auto;
   margin: 0;
   padding: 0;
 }
@@ -346,7 +357,10 @@ html.happy #stcm-wrapper {
   line-height: 20px;
   color: var(--textColor);
   opacity: 1;
-  margin: 0 0 15px;
+  margin: 0 0 25px;  /* Figma gap-15 between description box-bottom and "Necessary"
+                       legend box-top; +10px buffer to match the per-Figma-301:3986
+                       narrow-width rendering where the description's descenders
+                       otherwise crowd the next legend. */
 }
 
 #stcm-modal fieldset {
@@ -514,4 +528,20 @@ html.happy #stcm-wrapper {
   #stcm-modal {
     padding: 24px 20px;
   }
+}
+
+/* ==================================================================
+   BACKDROP — match the sidebar's `bg-black/30` dim. Silktide's backdrop
+   is enabled in client/index.html via `backdrop: { show: true }`, but
+   it would otherwise show under the bottom banner too. Suppress it
+   while the banner is in DOM (`removeBanner()` strips the node entirely
+   when the modal opens, so :has stops matching and the inline
+   display:block from showBackdrop takes over).
+   ================================================================== */
+#stcm-wrapper {
+  --backdropBackgroundColor: rgba(0, 0, 0, 0.3);
+}
+
+#stcm-wrapper:has(#stcm-banner) #stcm-backdrop {
+  display: none !important;
 }
