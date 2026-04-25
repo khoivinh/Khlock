@@ -11,6 +11,21 @@ type ThemeProviderContextType = {
 
 const ThemeProviderContext = createContext<ThemeProviderContextType | undefined>(undefined);
 
+/** Write the resolved theme color into <meta name="theme-color"> so the iOS
+ *  Safari status-bar / Android Chrome address-bar tint follows the in-app
+ *  theme (System / Light / Dark / Happy), not just the OS color-scheme.
+ *  index.html ships a single `<meta name="theme-color">` (no media= attr)
+ *  whose `content` is overwritten here on every resolved-theme change. */
+function applyThemeColor(resolved: ResolvedTheme) {
+  const color =
+    resolved === "dark"  ? "#171717" :
+    resolved === "happy" ? "#FFD900" :
+                           "#FFFFFF";
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", color);
+}
+
 export function ThemeProvider({
   children,
   defaultTheme = "system",
@@ -38,6 +53,7 @@ export function ThemeProvider({
     }
 
     root.classList.add(resolved);
+    applyThemeColor(resolved);
     setResolvedTheme(resolved);
   }, [theme]);
 
@@ -49,6 +65,7 @@ export function ThemeProvider({
         root.classList.remove("light", "dark", "happy");
         const resolved = mediaQuery.matches ? "dark" : "light";
         root.classList.add(resolved);
+        applyThemeColor(resolved);
         setResolvedTheme(resolved);
       }
     };
